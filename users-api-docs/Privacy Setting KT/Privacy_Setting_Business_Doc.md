@@ -110,6 +110,30 @@ privacy settings (on/off status har ek ka) ek saath return kar deta hai
 **Business impact**: Seller panel pe UI ko yeh data chahiye hota hai toggles sahi state mein
 dikhane ke liye.
 
+**Ek zaroori nuance**: "settings dekhna" API ke andar teen tarah ke calls chhupe hote hain —
+do "on karo"/"off karo" wale (jo actually ek change hi trigger karte hain, sirf read jaisa
+dikhta hai), aur ek asli "dikhao" wala. Konsa version chalega, yeh depend karta hai
+supplier ke app/browser ke version pe — purane app versions ko ek simpler, thoda alag
+tareeke se data milta hai naye versions ke comparison mein. Business ke liye iska matlab:
+agar kisi purane app-version wale supplier ka data thoda different dikhe ya "Seller
+Assistant"-jaisi extra details missing ho, iska reason unka app-version ho sakta hai.
+
+### Flow F — Secure link ke through settings access (bina normal login token ke)
+
+```
+1. Kabhi-kabhi supplier ko ek email ya link ke through directly settings page pe le jaaya
+   jaata hai (jaise ek "unsubscribe" ya "manage preferences" link)
+2. Yeh link ek special, time-limited signed-token carry karta hai (7 din tak valid)
+3. System token ko decode karta hai aur verify karta hai ki token mein embedded email,
+   supplier ke account ke email se match karta hai
+4. Match hone pe hi settings dikhayi jaati hain — normal login/session ke bina bhi
+```
+
+**Business impact**: Yeh supplier ko convenience deta hai — unhe login kiye bina bhi ek
+email link se seedhe apna preference change karne deta hai — lekin security ke liye is link
+ki ek expiry hai aur email-match zaroori hai, taaki koi purana ya forwarded link misuse na ho
+sake.
+
 ---
 
 ## 4. Business Rules — Plain Language Mein
@@ -126,6 +150,14 @@ dikhane ke liye.
    hai.
 5. **Har change ka audit-trail banta hai** — kaun, kab, kahan se (IP), kya change kiya, sab
    record hota hai. Yeh support/compliance investigations ke liye important hai.
+6. **Har setting ka apna "default" hota hai — aur system sirf "exception" record karta hai**:
+   agar koi setting default se "ON" hoti hai sabke liye, toh system tabhi ek record banata
+   hai jab koi usse explicitly OFF kare (aur vice versa agar default "OFF" hai). Iska matlab:
+   agar kisi supplier ne kabhi kuch touch hi nahi kiya, unka data database mein nahi milega —
+   yeh missing data nahi hai, yeh unke default state ko represent karta hai.
+7. **Kuch settings ke saath extra "sub-details" bhi judi hoti hain** — jaise Seller Assistant
+   se related kuch settings (AI-chat, calling-preference jaisi) ke saath ek extra JSON detail
+   bhi store/return hota hai, baaki normal settings ke saath aisa kuch nahi hota.
 
 ---
 
@@ -147,6 +179,15 @@ dikhane ke liye.
 4. **Internal logs mein "Insert/Delete" dikhna kabhi confusing lag sakta hai** — kuch setting
    types ke liye toggle ON/OFF internally Insert/Delete operations ke roop mein store hote
    hain, seedhe "value = true/false" ke bajaye (Flow B).
+5. **"Read" wala API kabhi-kabhi actually ek write bhi kar deta hai** — settings dekhne wale
+   hi API ke andar, do specific request-shapes asal mein setting ko turant on/off bhi kar
+   dete hain. Agar koi tool ya monitoring script sirf "check karne" ke liye is API ko baar-baar
+   call kar raha ho un dono shapes ke saath, woh anjaane mein settings change kar sakta hai.
+6. **Purane aur naye app-versions ko thoda alag response mil sakta hai** — teen alag internal
+   paths hain settings dikhane ke, aur inmein occasionally chhoti-si inconsistency ho sakti
+   hai (jaise koi setting ek path mein "default enabled" dikhe, doosre mein nahi) — agar kabhi
+   koi complain kare "meri setting ka default state alag app pe alag dikh raha hai," yeh iska
+   root-cause ho sakta hai.
 
 ---
 
