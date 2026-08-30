@@ -1,0 +1,639 @@
+<meta charset="utf-8" />
+<title>Flips &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Flips feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Flips</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="video"></i> Flips</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; content sync</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Flips &mdash; Social-Commerce Video</h1>
+    <p class="lede">Flips surfaces a supplier's short-form video (YouTube / Instagram / Facebook) on their
+      IndiaMART storefront. A supplier links a vendor account &mdash; by direct token or by Meta
+      business-login &mdash; then posts and updates video content in batches. A Kafka
+      <em>sync consumer</em> periodically diffs an external content feed and replays only the
+      deltas through the same write API. Buyers see Flips videos merged with product-catalog
+      videos in one gallery.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="video"></i> Social Commerce</p>
+      <h2>Flips &mdash; Social-Commerce Video</h2>
+      <p>Account and content writes share the same tables and both fire the
+      <code>FLIPS_WRITE_SERVICE</code> company-sync fan-out. The Kafka sync consumer never
+      writes the DB directly &mdash; it reads current content, diffs it against the feed, and
+      calls the write API in chunks of 30 so all validation still applies.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>Linking an account, posting content, and staying in sync</h3></span>
+        </header>
+        <div class="explain">
+<p>Three write flows plus a sync and a read:</p>
+          <ul>
+            <li><strong>Link account</strong> &mdash; <em>Token</em> mode upserts one row per user in <code>GLUSR_FLIPS_MAP</code>; <em>Meta</em> mode checks for a duplicate social account, inserts a detail row and auto-disables any sibling row for the same user + platform.</li>
+            <li><strong>Post content</strong> &mdash; a batch insert that de-dupes on (user, flips-id, video-id) in one round-trip.</li>
+            <li><strong>Update content</strong> &mdash; a batch update where only the fields present overwrite; missing fields keep their stored value.</li>
+            <li><strong>Background sync</strong> &mdash; the Kafka feed is diffed into disable / update / insert sets and replayed through the write API; a failed batch is published to the fail topic.</li>
+            <li><strong>Read</strong> &mdash; Flips content and product-catalog videos are merged and de-duplicated into one list.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Supplier / integration links an account"]:::actor --> T{"Auth mode"}:::decision
+    T -- "Token" --> TK["Upsert GLUSR_FLIPS_MAP<br/>(one row per user)"]:::system
+    T -- "Meta login" --> MD{"Social account<br/>already linked?"}:::decision
+    MD -- Yes --> RJ["Reject: account already exists"]:::terminal
+    MD -- No --> MI["Insert detail row,<br/>auto-disable sibling rows"]:::system
+    MI --> FO["Publish company-sync fan-out"]:::system
+    TK --> FN["(token path skips fan-out)"]:::terminal
+
+    P["Supplier posts / updates video content (batch)"]:::actor --> DD["De-dupe on user + flips-id + video-id"]:::system
+    DD --> BW["Batch INSERT or partial UPDATE, one round-trip"]:::system
+    BW --> FO
+
+    subgraph SY ["Background sync"]
+        direction TB
+        S["External feed sends a fresh snapshot (Kafka)"]:::external --> SD["Diff vs current content:<br/>disable / update / insert"]:::system
+        SD --> SC["Replay via write API, chunks of 30"]:::system
+        SC --> SF{"Any batch failed?"}:::decision
+        SF -- Yes --> SFT["Publish to FLIPS_CONTENT_SYNC_FAIL"]:::terminal
+        SF -- No --> SOK["Content in sync"]:::terminal
+    end
+
+    subgraph RD ["Buyer read"]
+        direction TB
+        B["Buyer opens the storefront"]:::actor --> RM["Merge Flips content + catalog videos,<br/>de-dupe by video-id"]:::system
+    end
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where Flips account and content data moves</h3></span>
+        </header>
+        <div class="explain">
+<p>Account and content share the fan-out; the sync consumer loops back through the write API:</p>
+          <ul>
+            <li><strong>1.0 Link account</strong> upserts <code>D1</code> (token) or writes <code>D2</code> (Meta, with sibling auto-disable).</li>
+            <li><strong>2.0 Write content</strong> batch-writes <code>D3</code> with DB-level de-dupe.</li>
+            <li><strong>3.0 Company-sync fan-out</strong> publishes <code>FLIPS_WRITE_SERVICE</code> after any account or content change.</li>
+            <li><strong>4.0 Kafka sync consumer</strong> reads <code>D3</code>, diffs against the feed, and calls <strong>2.0</strong> in chunks of 30.</li>
+            <li><strong>5.0 Read merged videos</strong> combines <code>D3</code> with catalog videos from <code>D4</code>.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    SUP["Supplier / integration"]:::ext
+    VP["External vendor platform<br/>(YouTube / Instagram / Facebook)"]:::ext
+    FEED["External content feed<br/>(Kafka)"]:::ext
+    BUY["Buyer"]:::ext
+
+    P1(("1.0<br/>Link<br/>account")):::proc
+    P2(("2.0<br/>Write content<br/>(batch)")):::proc
+    P3(("3.0<br/>Company-sync<br/>fan-out")):::proc
+    P4(("4.0<br/>Kafka sync<br/>consumer")):::proc
+    P5(("5.0<br/>Read merged<br/>videos")):::proc
+
+    D1[("D1 GLUSR_FLIPS_MAP<br/>document_pg")]:::store
+    D2[("D2 GLUSR_FLIPS_DETAIL")]:::store
+    D3[("D3 GLUSR_FLIPS_CONTENT_DETAIL")]:::store
+    D4[("D4 pc_item_doc (catalog videos)")]:::store
+    Q[["RabbitMQ comp.sync + Kafka fail topic"]]:::store
+
+    SUP -->|"token or Meta login"| P1
+    P1 -->|"upsert token"| D1
+    P1 -->|"insert detail, disable siblings"| D2
+    SUP -->|"content batch"| P2
+    P2 -->|"de-dupe + batch write"| D3
+    P1 -->|"after account change"| P3
+    P2 -->|"after content change"| P3
+    P3 -->|"publish FLIPS_WRITE_SERVICE"| Q
+    FEED -->|"fresh snapshot"| P4
+    P4 -->|"read current content"| D3
+    P4 -->|"replay deltas, chunks of 30"| P2
+    P4 -.->|"batch failure"| Q
+    BUY -->|"storefront view"| P5
+    P5 -->|"read"| D3
+    P5 -->|"read catalog videos"| D4
+    P5 -->|"merged, de-duped list"| BUY
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flow F</span><h3>Background content sync from the external feed</h3></span>
+        </header>
+        <div class="explain">
+<p>The sync consumer keeps all business rules by replaying through the write API:</p>
+          <ol>
+            <li>An external producer sends a fresh content snapshot for one (GLID, flips-id) on the Kafka topic.</li>
+            <li>The consumer reads current content rows and diffs them by video-id into disable, update and insert sets.</li>
+            <li>It calls the content write API twice &mdash; disable + update as <code>UPDATE_FLAG=U</code>, inserts as <code>UPDATE_FLAG=I</code> &mdash; chunked at 30 items, so validation and the fan-out still run.</li>
+            <li><strong>alt</strong> &mdash; if any batch fails, the original message is published to <code>FLIPS_CONTENT_SYNC_FAIL</code>.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant PR as External producer
+    participant K as Kafka sync topic
+    participant C as USER_FLIPS_CONTENT_SYNC<br/>consumer
+    participant DB as document_pg<br/>content rows
+    participant W as write-API<br/>flips content
+    participant FK as Kafka FLIPS_CONTENT_SYNC_FAIL
+
+    PR->>K: fresh content snapshot for (GLID, flips-id)
+    K->>C: deliver message
+    C->>DB: SELECT current content rows
+    DB-->>C: existing rows
+    C->>C: diff by video-id into disable / update / insert
+    C->>W: batch UPDATE_FLAG=U (disable + update), chunks of 30
+    C->>W: batch UPDATE_FLAG=I (insert), chunks of 30
+    W->>DB: batched write + company-sync fan-out
+    alt any batch failed
+        C->>FK: publish original message
+    else all ok
+        C-->>K: ack, content in sync
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Flips KT</code> business &amp; technical docs. The three core tables live in
+        <code>document_pg</code>, not <code>meshpg</code>. The sync consumer's Kafka topic name,
+        the social-media ID &rarr; platform mapping, and a <code>SIMILARITY_SCORE</code>
+        field-name typo are flagged as open questions in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="video"></i> Linking &amp; content</h3>
+        <dl>
+          <dt>Vendor account &mdash; Token mode</dt>
+          <dd>The supplier (or an integration) supplies a direct vendor-API access token. Stored one row per user in <code>GLUSR_FLIPS_MAP</code>; a new token silently replaces the old one.</dd>
+          <dt>Vendor account &mdash; Meta mode</dt>
+          <dd>The supplier links via Facebook / Instagram business-login. Creates a detail row in <code>GLUSR_FLIPS_DETAIL</code>.</dd>
+          <dt>Sibling auto-disable</dt>
+          <dd>When a new Meta account is linked, every other detail row for the same user + platform is set to disabled &mdash; one active linked account per platform.</dd>
+          <dt>Content de-dupe</dt>
+          <dd>A DB-level <code>WHERE NOT EXISTS</code> on (user, flips-id, video-id); a re-posted video is silently skipped, not an error.</dd>
+          <dt>Partial update</dt>
+          <dd>Content update uses <code>COALESCE</code> per column, so only the fields sent are overwritten; the rest keep their stored value.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="refresh-cw"></i> Sync &amp; merge</h3>
+        <dl>
+          <dt>Kafka sync consumer</dt>
+          <dd><code>USER_FLIPS_CONTENT_SYNC</code> &mdash; reads current content, diffs it against an external feed snapshot, and replays the delta through the write API. It never writes the DB directly.</dd>
+          <dt>Diff sets</dt>
+          <dd>Every video-id is classified into <em>disable</em> (in DB, gone from feed), <em>update</em> (in both) or <em>insert</em> (feed only).</dd>
+          <dt>Chunk of 30</dt>
+          <dd>The sync consumer calls the write API in batches of at most 30 items, separately for updates and inserts.</dd>
+          <dt><code>FLIPS_CONTENT_SYNC_FAIL</code></dt>
+          <dd>The Kafka fail topic the original message is republished to if any replay batch fails.</dd>
+          <dt>Product-catalog video merge</dt>
+          <dd>Videos uploaded through the product catalog are merged into the same buyer-facing gallery as Flips content and de-duplicated by video-id.</dd>
+          <dt><code>FLIPS_WRITE_SERVICE</code></dt>
+          <dd>The generic company-sync fan-out fired after any account-detail or content change (not on a bare token refresh).</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="users"></i> People &amp; systems</h3>
+        <dl>
+          <dt>Supplier</dt>
+          <dd>The seller who links a vendor account and posts content.</dd>
+          <dt>External vendor platform</dt>
+          <dd>YouTube / Instagram / Facebook &mdash; where the video is actually hosted and processed. IndiaMART only stores links and metadata.</dd>
+          <dt>Buyer</dt>
+          <dd>Sees the merged video gallery on the supplier's storefront.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for one user / company account.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>
