@@ -1,0 +1,682 @@
+<meta charset="utf-8" />
+<title>WhatsApp Message Integration &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API WhatsApp Message Integration feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">WhatsApp Message Integration</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="message-circle"></i> WhatsApp Message Integration</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; link record + nudge</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>WhatsApp Message Integration</h1>
+    <p class="lede">This KT covers two genuinely independent features that only share a name. First, a
+      <strong>WhatsApp Business integration record</strong>: a supplier's linked WhatsApp
+      Business account, with Meta-side verification, KYC and quality-rating status, written only
+      by internal admin / LMS tools and tracked as an ongoing relationship. Second, an
+      <strong>outbound &ldquo;app install&rdquo; nudge</strong>: a generic notification endpoint
+      that sends a WhatsApp (or SMS) message asking a user to install the IndiaMART app, gated by
+      a strict 24-hour per-number frequency cap. Different tables, different databases, different
+      purpose.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="message-circle"></i> Messaging &amp; Notifications</p>
+      <h2>WhatsApp Message Integration</h2>
+      <p><strong>Integration record</strong>: <code>POST</code> serviceName
+      <code>MSG_PLATFORM_INTEGRATION</code> (gateways GLADMIN / LMS), <code>action</code>
+      <code>i</code> / <code>u</code> against <code>Glusr_msg_platform_integration</code> (meshpg).
+      Status transitions into / out of the active bucket (sub-status 12&ndash;14 vs 15&ndash;19)
+      write <code>glusr_msg_platform_log</code>; scam / spam flags write it independently.
+      <strong>Nudge</strong>: the generic <code>sendmsg</code> endpoint, where
+      <code>source = WHATSAPP_8181 / WHATSAPP_9696</code> selects the WhatsApp branch;
+      <code>checkWhatsAppFrequency</code> enforces a 24-hour cap against
+      <code>iil_whatsapp_msg_events</code> (notification_pg_master) before an external vendor
+      HTTP call.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>Two unrelated things that share the word &ldquo;WhatsApp&rdquo;</h3></span>
+        </header>
+        <div class="explain">
+<p>Read the two halves separately:</p>
+          <ul>
+            <li><strong>Integration record (Flow A / B)</strong> &mdash; an internal admin or
+              LMS caller links or updates a supplier's WhatsApp Business account. Insert is an
+              upsert; update is a partial, field-by-field change after an exact-id existence
+              check. A status-change log row is written only when the sub-status actually moves
+              into the active bucket (<code>REINSTATED</code> / <code>UNLOCKED</code> /
+              <code>REONBOARDED</code>) or out of it (<code>LOCKED</code> &hellip;
+              <code>DELETED</code>) &mdash; a first-time <code>LIVE</code> does not log.
+              Scam / spam flagging is a separate, independent log write.</li>
+            <li><strong>Outbound nudge (Flow C)</strong> &mdash; an internal trigger calls the
+              generic <code>sendmsg</code> endpoint. Only two <code>source</code> values route
+              to WhatsApp; everything else is SMS. Before sending: skip if the user is already
+              on an app-installed device, skip if the SMS-side frequency table says so, then the
+              WhatsApp 24-hour cap (only successful past sends count). If clear, an external
+              vendor sends a template or free-text message.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    subgraph FA ["Integration record (admin / LMS only)"]
+        direction TB
+        A["Admin / LMS<br/>serviceName MSG_PLATFORM_INTEGRATION"]:::actor --> AG{"Gateway GLADMIN / LMS?"}:::decision
+        AG -- No --> ARJ["Reject"]:::terminal
+        AG -- Yes --> AAC{"action"}:::decision
+        AAC -- "i" --> AI["Upsert record<br/>(INSERT ON CONFLICT DO UPDATE)"]:::system
+        AAC -- "u" --> AU{"Exact record id exists?"}:::decision
+        AU -- No --> AUN["No Data Available For Update"]:::terminal
+        AU -- Yes --> AUP["Partial UPDATE (only fields sent)"]:::system
+        AI --> AS{"Sub-status moved into (12-14)<br/>or out of (15-19) active bucket?"}:::decision
+        AUP --> AS
+        AS -- Yes --> ASL["INSERT glusr_msg_platform_log"]:::system
+        AS -- No --> ANS["No status log"]:::terminal
+        ASL --> ASC{"Scam / spam flag present?"}:::decision
+        ANS --> ASC
+        ASC -- Yes --> ASS["Independent 2nd log INSERT (code 3 / 4)"]:::system
+        ASC -- No --> ADONE["Done"]:::terminal
+    end
+
+    subgraph FC ["Outbound app-install nudge"]
+        direction TB
+        C["Internal trigger &rarr; sendmsg {source}"]:::external --> CS{"source = WHATSAPP_8181 / 9696?"}:::decision
+        CS -- No --> CSMS["SMS branch (out of scope here)"]:::terminal
+        CS -- Yes --> CG{"Already app-installed device?<br/>or SMS freq table blocks?"}:::decision
+        CG -- Yes --> CSK["Skip"]:::terminal
+        CG -- No --> CF{"Sent to this number in last 24h?<br/>(successful sends only)"}:::decision
+        CF -- Yes --> CSK2["Silently skip (frequency capped)"]:::terminal
+        CF -- No --> CV["Normalise +91 &rarr; external vendor HTTP POST<br/>template if 9696, else free-text"]:::external
+    end
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where the integration record and the outbound nudge live</h3></span>
+        </header>
+        <div class="explain">
+<p>Two tables in two databases, plus an external vendor:</p>
+          <ul>
+            <li><strong>1.0 Integration write</strong> upserts / partially updates
+              <code>D1</code> and conditionally writes the log <code>D2</code>.</li>
+            <li><strong>2.0 Integration read</strong> returns <code>D1</code> with every numeric
+              status decoded via one-hot enum maps.</li>
+            <li><strong>3.0 Nudge gate</strong> checks the app-installed table and the SMS
+              frequency table <code>D4</code>.</li>
+            <li><strong>4.0 WhatsApp frequency check</strong> counts non-failed rows in
+              <code>D3</code> (a different physical DB) within 24 hours.</li>
+            <li><strong>5.0 Vendor send</strong> is an external HTTP POST; nothing in these
+              repos writes <code>D3</code> back.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    ADM["Internal admin / LMS"]:::ext
+    RDR["Caller (read)"]:::ext
+    TRG["Internal nudge trigger"]:::ext
+    VEND["External WhatsApp vendor"]:::ext
+
+    P1(("1.0<br/>Integration write<br/>upsert / partial update")):::proc
+    P2(("2.0<br/>Integration read<br/>(decode enums)")):::proc
+    P3(("3.0<br/>Nudge gate<br/>installed? SMS freq?")):::proc
+    P4(("4.0<br/>WhatsApp 24h<br/>frequency check")):::proc
+    P5(("5.0<br/>Vendor send")):::proc
+
+    D1[("D1 Glusr_msg_platform_integration<br/>meshpg")]:::store
+    D2[("D2 glusr_msg_platform_log<br/>meshpg")]:::store
+    D3[("D3 iil_whatsapp_msg_events<br/>notification_pg_master")]:::store
+    D4[("D4 sms_install_app<br/>notification_pg_master")]:::store
+    Q[["comp.sync.* generic fan-out (no dedicated consumer)"]]:::store
+
+    ADM -->|"action i / u"| P1
+    P1 -->|"upsert / update"| D1
+    P1 -->|"status + scam/spam log"| D2
+    P1 -.->|"publish on UPDATE SUCCESS"| Q
+    RDR -->|"GET msgintegration"| P2
+    P2 -->|"read + one-hot decode"| D1
+    TRG -->|"sendmsg source=WHATSAPP_*"| P3
+    P3 -->|"SMS freq check"| D4
+    P3 --> P4
+    P4 -->|"COUNT non-failed, 24h"| D3
+    P4 --> P5
+    P5 -->|"HTTP POST"| VEND
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + C</span><h3>Updating the integration record, and sending an app-install nudge</h3></span>
+        </header>
+        <div class="explain">
+<p>An integration update, then an app-install nudge:</p>
+          <ol>
+            <li>An admin / LMS caller sends <code>action=u</code>; the API checks the gateway,
+              confirms the exact record id exists, and applies a partial update.</li>
+            <li><strong>alt</strong> &mdash; if the sub-status actually changed into or out of
+              the active bucket, a status log row is written; if a scam / spam flag is present,
+              a second, independent log row is written.</li>
+            <li>Separately, an internal trigger calls <code>sendmsg</code> with
+              <code>source=WHATSAPP_9696</code>.</li>
+            <li>The gate skips already-installed users and SMS-throttled numbers; then
+              <strong>alt</strong> &mdash; if the 24-hour WhatsApp cap is clear, an external
+              vendor sends the message; otherwise it is silently skipped.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor ADM as Admin / LMS
+    participant API as write-API<br/>MsgIntegration
+    participant DB as meshpg<br/>integration + log
+    participant TRG as Nudge trigger
+    participant SM as sendmsg endpoint
+    participant FQ as freq tables<br/>notification_pg_master
+    participant V as External vendor
+
+    ADM->>API: POST action = u {glid, platform_id, fields}
+    API->>API: gateway GLADMIN / LMS
+    API->>DB: check exact record id exists
+    API->>DB: partial UPDATE (only fields sent)
+    alt sub-status moved into / out of active bucket
+        API->>DB: INSERT glusr_msg_platform_log (status)
+    end
+    alt scam / spam flag present
+        API->>DB: INSERT glusr_msg_platform_log (code 3 / 4)
+    end
+    API-->>ADM: UPDATE SUCCESS
+
+    Note over TRG,V: separate feature - app-install nudge
+    TRG->>SM: sendmsg {source = WHATSAPP_9696, mobile}
+    SM->>FQ: already installed? SMS freq blocks?
+    SM->>FQ: WhatsApp sends to this number in last 24h (successful only)
+    alt within cap
+        SM->>V: HTTP POST template message (+91 normalised)
+        V-->>SM: accepted
+    else capped
+        SM-->>TRG: silently skipped
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>WA Msg Integration KT</code> business &amp; technical docs. The two
+        features share only the word &ldquo;WhatsApp&rdquo; &mdash; the integration record lives
+        in <code>meshpg</code>, the nudge history in <code>notification_pg_master</code>. Nothing
+        in the three repos writes <code>iil_whatsapp_msg_events</code> (the vendor callback
+        likely does), the integration-write RabbitMQ event has no dedicated consumer, and the
+        public social-contact WhatsApp toggle is a third, separate feature &mdash; all flagged in
+        the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="link-2"></i> Integration record</h3>
+        <dl>
+          <dt>WhatsApp Business integration</dt>
+          <dd>A supplier's official WhatsApp Business account linked to IndiaMART through an external BSP vendor &mdash; an ongoing, status-tracked relationship, not a one-time setup.</dd>
+          <dt>BSP</dt>
+          <dd>Business Solution Provider &mdash; the external WhatsApp-messaging vendor (AiSensy / Meta / ValueFirst) the integration runs on.</dd>
+          <dt>Admin / LMS only</dt>
+          <dd>The integration record is written only by internal GLADMIN or LMS tools; the supplier never calls this API directly.</dd>
+          <dt>Sub-status buckets</dt>
+          <dd>Numeric statuses group into ACTIVE (11&ndash;14), PARTIALLY_ACTIVE (15), INACTIVE (16&ndash;19) and others. Moving into the active bucket (12&ndash;14) or out of it (15&ndash;19) is what triggers a log row.</dd>
+          <dt>First-time <code>LIVE</code> does not log</dt>
+          <dd>Status 11 (first activation) is deliberately excluded from the status-change log; only transitions through reinstated / locked / deleted states are recorded.</dd>
+          <dt>Scam / Spam flag</dt>
+          <dd>A Meta-side flag recorded as its own independent audit row (internal code 3 = SCAM, 4 = SPAM), separate from status-change logging.</dd>
+          <dt>One-hot response</dt>
+          <dd>The read API returns every possible enum key with a 1 / 0 value rather than a single string; clients scan for the key set to 1.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="send"></i> Outbound nudge</h3>
+        <dl>
+          <dt>App-install nudge</dt>
+          <dd>A transactional WhatsApp (or SMS) message asking a user to install the IndiaMART app.</dd>
+          <dt>Shared dispatch point</dt>
+          <dd>The generic <code>sendmsg</code> endpoint sends both SMS and WhatsApp; the channel is chosen purely by the caller's <code>source</code> value. Only <code>WHATSAPP_8181</code> and <code>WHATSAPP_9696</code> route to WhatsApp.</dd>
+          <dt>24-hour frequency cap</dt>
+          <dd>Per mobile number, the same nudge is not re-sent within 24 hours. Only successful past attempts count, so a failed attempt can be retried sooner.</dd>
+          <dt><code>iil_whatsapp_msg_events</code></dt>
+          <dd>The send-history table the cap is checked against &mdash; in a different physical database (<code>notification_pg_master</code>) from the integration record.</dd>
+          <dt>Already-installed skip</dt>
+          <dd>If the system already knows the user is on an app-installed device, the nudge is skipped entirely.</dd>
+          <dt>Template vs free-text</dt>
+          <dd><code>WHATSAPP_9696</code> sends a pre-approved content template; other WhatsApp sources send a hardcoded free-text message.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="scan"></i> Boundaries</h3>
+        <dl>
+          <dt>Not the social-contact toggle</dt>
+          <dd>A supplier's public &ldquo;show WhatsApp as a contact method&rdquo; flag (<code>IS_WHATSAPP_ACTIVE</code>) is a third, separate feature covered by the Social Contacts KT.</dd>
+          <dt>Generic fan-out</dt>
+          <dd>The integration write publishes to a shared <code>comp.sync.*</code> company-sync channel used by many domains; no consumer dedicated to this feature was found.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>

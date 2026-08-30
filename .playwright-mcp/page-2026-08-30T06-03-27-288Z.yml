@@ -1,0 +1,426 @@
+- generic [ref=f31e2]:
+  - complementary [ref=f31e3]:
+    - paragraph [ref=f31e4]: IndiaMART · Users-API KT
+    - paragraph [ref=f31e5]: WhatsApp Message Integration
+    - navigation [ref=f31e6]:
+      - list [ref=f31e7]:
+        - listitem [ref=f31e8]:
+          - link "How to read these" [ref=f31e9] [cursor=pointer]:
+            - /url: "#legend"
+        - listitem [ref=f31e13]:
+          - link "WhatsApp Message Integration" [ref=f31e14] [cursor=pointer]:
+            - /url: "#feature"
+        - listitem [ref=f31e17]:
+          - link "Business flowchart" [ref=f31e18] [cursor=pointer]:
+            - /url: "#d-biz"
+        - listitem [ref=f31e19]:
+          - link "Data-flow diagram" [ref=f31e20] [cursor=pointer]:
+            - /url: "#d-dfd"
+        - listitem [ref=f31e21]:
+          - link "Sequence — link record + nudge" [ref=f31e22] [cursor=pointer]:
+            - /url: "#d-seq"
+        - listitem [ref=f31e23]:
+          - link "Glossary" [ref=f31e24] [cursor=pointer]:
+            - /url: "#glossary"
+  - main [ref=f31e28]:
+    - paragraph [ref=f31e29]: Knowledge Transfer · Engineering
+    - heading "WhatsApp Message Integration" [level=1] [ref=f31e30]
+    - paragraph [ref=f31e31]:
+      - text: This KT covers two genuinely independent features that only share a name. First, a
+      - strong [ref=f31e32]: WhatsApp Business integration record
+      - text: ": a supplier's linked WhatsApp Business account, with Meta-side verification, KYC and quality-rating status, written only by internal admin / LMS tools and tracked as an ongoing relationship. Second, an"
+      - strong [ref=f31e33]: outbound “app install” nudge
+      - text: ": a generic notification endpoint that sends a WhatsApp (or SMS) message asking a user to install the IndiaMART app, gated by a strict 24-hour per-number frequency cap. Different tables, different databases, different purpose."
+    - generic [ref=f31e34]:
+      - heading "How to read these diagrams" [level=2] [ref=f31e35]
+      - generic [ref=f31e36]:
+        - generic [ref=f31e37]:
+          - heading "Node shape & colour" [level=5] [ref=f31e38]
+          - list [ref=f31e39]:
+            - listitem [ref=f31e40]: Rectangle — actor / external entity
+            - listitem [ref=f31e42]: Rounded — system step / process
+            - listitem [ref=f31e44]: Diamond — decision · cylinder — data store
+            - listitem [ref=f31e46]: External system / third party
+            - listitem [ref=f31e48]: Terminal outcome
+        - generic [ref=f31e50]:
+          - heading "Role icons (page chrome)" [level=5] [ref=f31e51]
+          - list [ref=f31e52]:
+            - listitem [ref=f31e53]: Supplier / buyer / internal admin
+            - listitem [ref=f31e58]: System process / async consumer
+            - listitem [ref=f31e71]: External / third-party service
+            - listitem [ref=f31e75]: Database message queue
+            - listitem [ref=f31e85]: Notification / ops alert
+        - generic [ref=f31e90]:
+          - heading "Diagram types" [level=5] [ref=f31e91]
+          - list [ref=f31e92]:
+            - listitem [ref=f31e93]:
+              - generic [ref=f31e99]:
+                - strong [ref=f31e100]: Business flowchart
+                - text: — decisions & outcomes, no code.
+            - listitem [ref=f31e101]:
+              - generic [ref=f31e109]:
+                - strong [ref=f31e110]: DFD (Level 1)
+                - text: — numbered processes,
+                - code [ref=f31e111]: D1…Dn
+                - text: stores, data on every arrow.
+            - listitem [ref=f31e112]:
+              - generic [ref=f31e117]:
+                - strong [ref=f31e118]: Sequence
+                - text: — lifelines in call order;
+                - code [ref=f31e119]: alt
+                - text: = branches,
+                - code [ref=f31e120]: par
+                - text: = parallel work.
+    - generic [ref=f31e121]:
+      - paragraph [ref=f31e122]: Messaging & Notifications
+      - heading "WhatsApp Message Integration" [level=2] [ref=f31e125]
+      - paragraph [ref=f31e126]:
+        - strong [ref=f31e127]: Integration record
+        - text: ":"
+        - code [ref=f31e128]: POST
+        - text: serviceName
+        - code [ref=f31e129]: MSG_PLATFORM_INTEGRATION
+        - text: (gateways GLADMIN / LMS),
+        - code [ref=f31e130]: action
+        - code [ref=f31e131]: i
+        - text: /
+        - code [ref=f31e132]: u
+        - text: against
+        - code [ref=f31e133]: Glusr_msg_platform_integration
+        - text: (meshpg). Status transitions into / out of the active bucket (sub-status 12–14 vs 15–19) write
+        - code [ref=f31e134]: glusr_msg_platform_log
+        - text: ; scam / spam flags write it independently.
+        - strong [ref=f31e135]: Nudge
+        - text: ": the generic"
+        - code [ref=f31e136]: sendmsg
+        - text: endpoint, where
+        - code [ref=f31e137]: source = WHATSAPP_8181 / WHATSAPP_9696
+        - text: selects the WhatsApp branch;
+        - code [ref=f31e138]: checkWhatsAppFrequency
+        - text: enforces a 24-hour cap against
+        - code [ref=f31e139]: iil_whatsapp_msg_events
+        - text: (notification_pg_master) before an external vendor HTTP call.
+      - article [ref=f31e140]:
+        - generic [ref=f31e147]:
+          - generic [ref=f31e148]: Business flowchart
+          - heading "Two unrelated things that share the word “WhatsApp”" [level=3] [ref=f31e149]
+        - generic [ref=f31e150]:
+          - paragraph [ref=f31e151]: "Read the two halves separately:"
+          - list [ref=f31e152]:
+            - listitem [ref=f31e153]:
+              - strong [ref=f31e154]: Integration record (Flow A / B)
+              - text: — an internal admin or LMS caller links or updates a supplier's WhatsApp Business account. Insert is an upsert; update is a partial, field-by-field change after an exact-id existence check. A status-change log row is written only when the sub-status actually moves into the active bucket (
+              - code [ref=f31e155]: REINSTATED
+              - text: /
+              - code [ref=f31e156]: UNLOCKED
+              - text: /
+              - code [ref=f31e157]: REONBOARDED
+              - text: ) or out of it (
+              - code [ref=f31e158]: LOCKED
+              - text: …
+              - code [ref=f31e159]: DELETED
+              - text: ) — a first-time
+              - code [ref=f31e160]: LIVE
+              - text: does not log. Scam / spam flagging is a separate, independent log write.
+            - listitem [ref=f31e161]:
+              - strong [ref=f31e162]: Outbound nudge (Flow C)
+              - text: — an internal trigger calls the generic
+              - code [ref=f31e163]: sendmsg
+              - text: endpoint. Only two
+              - code [ref=f31e164]: source
+              - text: "values route to WhatsApp; everything else is SMS. Before sending: skip if the user is already on an app-installed device, skip if the SMS-side frequency table says so, then the WhatsApp 24-hour cap (only successful past sends count). If clear, an external vendor sends a template or free-text message."
+        - document [ref=f31e167]:
+          - generic [ref=f31e170]:
+            - generic [ref=f31e171]:
+              - generic [ref=f31e172]: Outbound app-install nudge
+              - generic [ref=f31e186]:
+                - generic [ref=f31e187]: "No"
+                - generic [ref=f31e191]: "Yes"
+                - generic [ref=f31e195]: "Yes"
+                - generic [ref=f31e199]: "No"
+                - generic [ref=f31e203]: "Yes"
+                - generic [ref=f31e207]: "No"
+              - generic [ref=f31e211]:
+                - generic [ref=f31e212]: source = WHATSAPP_8181 / 9696?
+                - generic [ref=f31e217]: "Internal trigger → sendmsg {source}"
+                - generic [ref=f31e222]: SMS branch (out of scope here)
+                - generic [ref=f31e227]: Already app-installed device?or SMS freq table blocks?
+                - generic [ref=f31e233]: Skip
+                - generic [ref=f31e238]: Sent to this number in last 24h?(successful sends only)
+                - generic [ref=f31e244]: Silently skip (frequency capped)
+                - generic [ref=f31e249]: Normalise +91 → external vendor HTTP POSTtemplate if 9696, else free-text
+            - generic [ref=f31e255]:
+              - generic [ref=f31e256]: Integration record (admin / LMS only)
+              - generic [ref=f31e278]:
+                - generic [ref=f31e279]: "No"
+                - generic [ref=f31e283]: "Yes"
+                - generic [ref=f31e287]: i
+                - generic [ref=f31e291]: u
+                - generic [ref=f31e295]: "No"
+                - generic [ref=f31e299]: "Yes"
+                - generic [ref=f31e303]: "Yes"
+                - generic [ref=f31e307]: "No"
+                - generic [ref=f31e311]: "Yes"
+                - generic [ref=f31e315]: "No"
+              - generic [ref=f31e319]:
+                - generic [ref=f31e320]: Gateway GLADMIN / LMS?
+                - generic [ref=f31e325]: Admin / LMSserviceName MSG_PLATFORM_INTEGRATION
+                - generic [ref=f31e331]: Reject
+                - generic [ref=f31e336]: action
+                - generic [ref=f31e341]: Upsert record(INSERT ON CONFLICT DO UPDATE)
+                - generic [ref=f31e347]: Exact record id exists?
+                - generic [ref=f31e352]: No Data Available For Update
+                - generic [ref=f31e357]: Partial UPDATE (only fields sent)
+                - generic [ref=f31e362]: Sub-status moved into (12-14)or out of (15-19) active bucket?
+                - generic [ref=f31e368]: INSERT glusr_msg_platform_log
+                - generic [ref=f31e373]: No status log
+                - generic [ref=f31e378]: Scam / spam flag present?
+                - generic [ref=f31e383]: Independent 2nd log INSERT (code 3 / 4)
+                - generic [ref=f31e388]: Done
+      - article [ref=f31e393]:
+        - generic [ref=f31e402]:
+          - generic [ref=f31e403]: Data-flow diagram · Level 1
+          - heading "Where the integration record and the outbound nudge live" [level=3] [ref=f31e404]
+        - generic [ref=f31e405]:
+          - paragraph [ref=f31e406]: "Two tables in two databases, plus an external vendor:"
+          - list [ref=f31e407]:
+            - listitem [ref=f31e408]:
+              - strong [ref=f31e409]: 1.0 Integration write
+              - text: upserts / partially updates
+              - code [ref=f31e410]: D1
+              - text: and conditionally writes the log
+              - code [ref=f31e411]: D2
+              - text: .
+            - listitem [ref=f31e412]:
+              - strong [ref=f31e413]: 2.0 Integration read
+              - text: returns
+              - code [ref=f31e414]: D1
+              - text: with every numeric status decoded via one-hot enum maps.
+            - listitem [ref=f31e415]:
+              - strong [ref=f31e416]: 3.0 Nudge gate
+              - text: checks the app-installed table and the SMS frequency table
+              - code [ref=f31e417]: D4
+              - text: .
+            - listitem [ref=f31e418]:
+              - strong [ref=f31e419]: 4.0 WhatsApp frequency check
+              - text: counts non-failed rows in
+              - code [ref=f31e420]: D3
+              - text: (a different physical DB) within 24 hours.
+            - listitem [ref=f31e421]:
+              - strong [ref=f31e422]: 5.0 Vendor send
+              - text: is an external HTTP POST; nothing in these repos writes
+              - code [ref=f31e423]: D3
+              - text: back.
+        - document [ref=f31e426]:
+          - generic [ref=f31e428]:
+            - generic [ref=f31e437]:
+              - generic [ref=f31e438]: action i / u
+              - generic [ref=f31e442]: upsert / update
+              - generic [ref=f31e446]: status + scam/spam log
+              - generic [ref=f31e450]: publish on UPDATE SUCCESS
+              - generic [ref=f31e454]: GET msgintegration
+              - generic [ref=f31e458]: read + one-hot decode
+              - generic [ref=f31e462]: sendmsg source=WHATSAPP_*
+              - generic [ref=f31e466]: SMS freq check
+              - generic [ref=f31e470]: COUNT non-failed, 24h
+              - generic [ref=f31e474]: HTTP POST
+            - generic [ref=f31e478]:
+              - generic [ref=f31e479]: Internal admin / LMS
+              - generic [ref=f31e484]: Caller (read)
+              - generic [ref=f31e489]: Internal nudge trigger
+              - generic [ref=f31e494]: External WhatsApp vendor
+              - generic [ref=f31e499]: 1.0Integration writeupsert / partial update
+              - generic [ref=f31e505]: 2.0Integration read(decode enums)
+              - generic [ref=f31e511]: 3.0Nudge gateinstalled? SMS freq?
+              - generic [ref=f31e517]: 4.0WhatsApp 24hfrequency check
+              - generic [ref=f31e523]: 5.0Vendor send
+              - generic [ref=f31e529]: D1 Glusr_msg_platform_integrationmeshpg
+              - generic [ref=f31e535]: D2 glusr_msg_platform_logmeshpg
+              - generic [ref=f31e541]: D3 iil_whatsapp_msg_eventsnotification_pg_master
+              - generic [ref=f31e547]: D4 sms_install_appnotification_pg_master
+              - generic [ref=f31e553]: comp.sync.* generic fan-out (no dedicated consumer)
+      - article [ref=f31e558]:
+        - generic [ref=f31e564]:
+          - generic [ref=f31e565]: Sequence diagram · Flows A + C
+          - heading "Updating the integration record, and sending an app-install nudge" [level=3] [ref=f31e566]
+        - generic [ref=f31e567]:
+          - paragraph [ref=f31e568]: "An integration update, then an app-install nudge:"
+          - list [ref=f31e569]:
+            - listitem [ref=f31e570]:
+              - text: An admin / LMS caller sends
+              - code [ref=f31e571]: action=u
+              - text: ; the API checks the gateway, confirms the exact record id exists, and applies a partial update.
+            - listitem [ref=f31e572]:
+              - strong [ref=f31e573]: alt
+              - text: — if the sub-status actually changed into or out of the active bucket, a status log row is written; if a scam / spam flag is present, a second, independent log row is written.
+            - listitem [ref=f31e574]:
+              - text: Separately, an internal trigger calls
+              - code [ref=f31e575]: sendmsg
+              - text: with
+              - code [ref=f31e576]: source=WHATSAPP_9696
+              - text: .
+            - listitem [ref=f31e577]:
+              - text: The gate skips already-installed users and SMS-throttled numbers; then
+              - strong [ref=f31e578]: alt
+              - text: — if the 24-hour WhatsApp cap is clear, an external vendor sends the message; otherwise it is silently skipped.
+        - document [ref=f31e581]:
+          - generic [ref=f31e582]: External vendor
+          - generic [ref=f31e585]:
+            - generic [ref=f31e587]: freq tables
+            - generic [ref=f31e588]: notification_pg_master
+          - generic [ref=f31e589]:
+            - generic [ref=f31e591]: sendmsg
+            - generic [ref=f31e592]: endpoint
+          - generic [ref=f31e593]: Nudge trigger
+          - generic [ref=f31e596]:
+            - generic [ref=f31e598]: meshpg
+            - generic [ref=f31e599]: integration + log
+          - generic [ref=f31e600]:
+            - generic [ref=f31e602]: write-API
+            - generic [ref=f31e603]: MsgIntegration
+          - generic [ref=f31e604]: External vendor
+          - generic [ref=f31e609]:
+            - generic [ref=f31e611]: freq tables
+            - generic [ref=f31e612]: notification_pg_master
+          - generic [ref=f31e614]:
+            - generic [ref=f31e616]: sendmsg
+            - generic [ref=f31e617]: endpoint
+          - generic [ref=f31e618]: Nudge trigger
+          - generic [ref=f31e623]:
+            - generic [ref=f31e625]: meshpg
+            - generic [ref=f31e626]: integration + log
+          - generic [ref=f31e628]:
+            - generic [ref=f31e630]: write-API
+            - generic [ref=f31e631]: MsgIntegration
+          - generic [ref=f31e632]:
+            - generic [ref=f31e634]: alt
+            - generic [ref=f31e635]: "[sub-status moved"
+            - generic [ref=f31e636]: into / out of active
+            - generic [ref=f31e637]: bucket]
+          - generic [ref=f31e638]:
+            - generic [ref=f31e640]: alt
+            - generic [ref=f31e641]: "[scam / spam flag"
+            - generic [ref=f31e642]: present]
+          - generic [ref=f31e643]: separate feature - app-install nudge
+          - generic [ref=f31e646]:
+            - generic [ref=f31e648]: alt
+            - generic [ref=f31e649]: "[within cap]"
+            - generic [ref=f31e650]: "[capped]"
+          - generic [ref=f31e651]: Admin / LMS
+          - generic [ref=f31e656]: "POST action = u {glid,"
+          - generic [ref=f31e657]: "platform_id, fields}"
+          - generic [ref=f31e658]: "1"
+          - generic [ref=f31e659]: gateway GLADMIN /
+          - generic [ref=f31e660]: LMS
+          - generic [ref=f31e662]: "2"
+          - generic [ref=f31e663]: check exact record id exists
+          - generic [ref=f31e664]: "3"
+          - generic [ref=f31e665]: partial UPDATE (only fields
+          - generic [ref=f31e666]: sent)
+          - generic [ref=f31e667]: "4"
+          - generic [ref=f31e668]: INSERT
+          - generic [ref=f31e669]: glusr_msg_platform_log
+          - generic [ref=f31e670]: (status)
+          - generic [ref=f31e671]: "5"
+          - generic [ref=f31e672]: INSERT
+          - generic [ref=f31e673]: glusr_msg_platform_log
+          - generic [ref=f31e674]: (code 3 / 4)
+          - generic [ref=f31e675]: "6"
+          - generic [ref=f31e676]: UPDATE SUCCESS
+          - generic [ref=f31e677]: "7"
+          - generic [ref=f31e678]: "sendmsg {source ="
+          - generic [ref=f31e679]: "WHATSAPP_9696, mobile}"
+          - generic [ref=f31e680]: "8"
+          - generic [ref=f31e681]: already installed? SMS freq
+          - generic [ref=f31e682]: blocks?
+          - generic [ref=f31e683]: "9"
+          - generic [ref=f31e684]: WhatsApp sends to this
+          - generic [ref=f31e685]: number in last 24h
+          - generic [ref=f31e686]: (successful only)
+          - generic [ref=f31e687]: "10"
+          - generic [ref=f31e688]: HTTP POST template message (+91 normalised)
+          - generic [ref=f31e689]: "11"
+          - generic [ref=f31e690]: accepted
+          - generic [ref=f31e691]: "12"
+          - generic [ref=f31e692]: silently skipped
+          - generic [ref=f31e693]: "13"
+          - generic [ref=f31e694]: Admin / LMS
+      - paragraph [ref=f31e699]:
+        - text: "Source:"
+        - code [ref=f31e700]: WA Msg Integration KT
+        - text: business & technical docs. The two features share only the word “WhatsApp” — the integration record lives in
+        - code [ref=f31e701]: meshpg
+        - text: ", the nudge history in"
+        - code [ref=f31e702]: notification_pg_master
+        - text: . Nothing in the three repos writes
+        - code [ref=f31e703]: iil_whatsapp_msg_events
+        - text: (the vendor callback likely does), the integration-write RabbitMQ event has no dedicated consumer, and the public social-contact WhatsApp toggle is a third, separate feature — all flagged in the source doc.
+    - generic [ref=f31e704]:
+      - heading "Glossary" [level=2] [ref=f31e705]
+      - paragraph [ref=f31e706]: Business terms used above.
+      - generic [ref=f31e707]:
+        - heading "Integration record" [level=3] [ref=f31e708]
+        - generic [ref=f31e712]:
+          - term [ref=f31e713]: WhatsApp Business integration
+          - definition [ref=f31e714]: A supplier's official WhatsApp Business account linked to IndiaMART through an external BSP vendor — an ongoing, status-tracked relationship, not a one-time setup.
+          - term [ref=f31e715]: BSP
+          - definition [ref=f31e716]: Business Solution Provider — the external WhatsApp-messaging vendor (AiSensy / Meta / ValueFirst) the integration runs on.
+          - term [ref=f31e717]: Admin / LMS only
+          - definition [ref=f31e718]: The integration record is written only by internal GLADMIN or LMS tools; the supplier never calls this API directly.
+          - term [ref=f31e719]: Sub-status buckets
+          - definition [ref=f31e720]: Numeric statuses group into ACTIVE (11–14), PARTIALLY_ACTIVE (15), INACTIVE (16–19) and others. Moving into the active bucket (12–14) or out of it (15–19) is what triggers a log row.
+          - term [ref=f31e721]:
+            - text: First-time
+            - code [ref=f31e722]: LIVE
+            - text: does not log
+          - definition [ref=f31e723]: Status 11 (first activation) is deliberately excluded from the status-change log; only transitions through reinstated / locked / deleted states are recorded.
+          - term [ref=f31e724]: Scam / Spam flag
+          - definition [ref=f31e725]: A Meta-side flag recorded as its own independent audit row (internal code 3 = SCAM, 4 = SPAM), separate from status-change logging.
+          - term [ref=f31e726]: One-hot response
+          - definition [ref=f31e727]: The read API returns every possible enum key with a 1 / 0 value rather than a single string; clients scan for the key set to 1.
+      - generic [ref=f31e728]:
+        - heading "Outbound nudge" [level=3] [ref=f31e729]
+        - generic [ref=f31e733]:
+          - term [ref=f31e734]: App-install nudge
+          - definition [ref=f31e735]: A transactional WhatsApp (or SMS) message asking a user to install the IndiaMART app.
+          - term [ref=f31e736]: Shared dispatch point
+          - definition [ref=f31e737]:
+            - text: The generic
+            - code [ref=f31e738]: sendmsg
+            - text: endpoint sends both SMS and WhatsApp; the channel is chosen purely by the caller's
+            - code [ref=f31e739]: source
+            - text: value. Only
+            - code [ref=f31e740]: WHATSAPP_8181
+            - text: and
+            - code [ref=f31e741]: WHATSAPP_9696
+            - text: route to WhatsApp.
+          - term [ref=f31e742]: 24-hour frequency cap
+          - definition [ref=f31e743]: Per mobile number, the same nudge is not re-sent within 24 hours. Only successful past attempts count, so a failed attempt can be retried sooner.
+          - term [ref=f31e744]:
+            - code [ref=f31e745]: iil_whatsapp_msg_events
+          - definition [ref=f31e746]:
+            - text: The send-history table the cap is checked against — in a different physical database (
+            - code [ref=f31e747]: notification_pg_master
+            - text: ) from the integration record.
+          - term [ref=f31e748]: Already-installed skip
+          - definition [ref=f31e749]: If the system already knows the user is on an app-installed device, the nudge is skipped entirely.
+          - term [ref=f31e750]: Template vs free-text
+          - definition [ref=f31e751]:
+            - code [ref=f31e752]: WHATSAPP_9696
+            - text: sends a pre-approved content template; other WhatsApp sources send a hardcoded free-text message.
+      - generic [ref=f31e753]:
+        - heading "Boundaries" [level=3] [ref=f31e754]
+        - generic [ref=f31e760]:
+          - term [ref=f31e761]: Not the social-contact toggle
+          - definition [ref=f31e762]:
+            - text: A supplier's public “show WhatsApp as a contact method” flag (
+            - code [ref=f31e763]: IS_WHATSAPP_ACTIVE
+            - text: ) is a third, separate feature covered by the Social Contacts KT.
+          - term [ref=f31e764]: Generic fan-out
+          - definition [ref=f31e765]:
+            - text: The integration write publishes to a shared
+            - code [ref=f31e766]: comp.sync.*
+            - text: company-sync channel used by many domains; no consumer dedicated to this feature was found.
+          - term [ref=f31e767]: GLID
+          - definition [ref=f31e768]: GlobalID — the unique internal identifier for the supplier.
+    - generic [ref=f31e769]: Generated from the Users-API KT docs · diagrams rendered with Mermaid.

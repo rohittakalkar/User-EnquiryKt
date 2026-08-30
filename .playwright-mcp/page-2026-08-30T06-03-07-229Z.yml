@@ -1,0 +1,421 @@
+- generic [ref=f29e2]:
+  - complementary [ref=f29e3]:
+    - paragraph [ref=f29e4]: IndiaMART · Users-API KT
+    - paragraph [ref=f29e5]: PNS (Virtual Number Pool)
+    - navigation [ref=f29e6]:
+      - list [ref=f29e7]:
+        - listitem [ref=f29e8]:
+          - link "How to read these" [ref=f29e9] [cursor=pointer]:
+            - /url: "#legend"
+        - listitem [ref=f29e13]:
+          - link "PNS (Virtual Number Pool)" [ref=f29e14] [cursor=pointer]:
+            - /url: "#feature"
+        - listitem [ref=f29e17]:
+          - link "Business flowchart" [ref=f29e18] [cursor=pointer]:
+            - /url: "#d-biz"
+        - listitem [ref=f29e19]:
+          - link "Data-flow diagram" [ref=f29e20] [cursor=pointer]:
+            - /url: "#d-dfd"
+        - listitem [ref=f29e21]:
+          - link "Sequence — allocate then release" [ref=f29e22] [cursor=pointer]:
+            - /url: "#d-seq"
+        - listitem [ref=f29e23]:
+          - link "Glossary" [ref=f29e24] [cursor=pointer]:
+            - /url: "#glossary"
+  - main [ref=f29e28]:
+    - paragraph [ref=f29e29]: Knowledge Transfer · Engineering
+    - heading "PNS — Virtual Number Pool" [level=1] [ref=f29e30]
+    - paragraph [ref=f29e31]:
+      - text: PNS manages a shared pool of virtual GSM (“IM_GSM”) numbers that mask a supplier's real phone. One write endpoint drives the whole lifecycle through a single numeric
+      - code [ref=f29e32]: ACTION
+      - text: "code: add a number to the pool, re-flag one, allocate one to a supplier, release one back, or bulk-convert many. Allocation and release both call the standard user-update API to actually attach or clear the number on the supplier. The replication queue is commented out, so the auth / search copies of the pool drift; a separate deletion-reason queue is live and feeds an audit table."
+    - generic [ref=f29e33]:
+      - heading "How to read these diagrams" [level=2] [ref=f29e34]
+      - generic [ref=f29e35]:
+        - generic [ref=f29e36]:
+          - heading "Node shape & colour" [level=5] [ref=f29e37]
+          - list [ref=f29e38]:
+            - listitem [ref=f29e39]: Rectangle — actor / external entity
+            - listitem [ref=f29e41]: Rounded — system step / process
+            - listitem [ref=f29e43]: Diamond — decision · cylinder — data store
+            - listitem [ref=f29e45]: External system / third party
+            - listitem [ref=f29e47]: Terminal outcome
+        - generic [ref=f29e49]:
+          - heading "Role icons (page chrome)" [level=5] [ref=f29e50]
+          - list [ref=f29e51]:
+            - listitem [ref=f29e52]: Supplier / buyer / internal admin
+            - listitem [ref=f29e57]: System process / async consumer
+            - listitem [ref=f29e70]: External / third-party service
+            - listitem [ref=f29e74]: Database message queue
+            - listitem [ref=f29e84]: Notification / ops alert
+        - generic [ref=f29e89]:
+          - heading "Diagram types" [level=5] [ref=f29e90]
+          - list [ref=f29e91]:
+            - listitem [ref=f29e92]:
+              - generic [ref=f29e98]:
+                - strong [ref=f29e99]: Business flowchart
+                - text: — decisions & outcomes, no code.
+            - listitem [ref=f29e100]:
+              - generic [ref=f29e108]:
+                - strong [ref=f29e109]: DFD (Level 1)
+                - text: — numbered processes,
+                - code [ref=f29e110]: D1…Dn
+                - text: stores, data on every arrow.
+            - listitem [ref=f29e111]:
+              - generic [ref=f29e116]:
+                - strong [ref=f29e117]: Sequence
+                - text: — lifelines in call order;
+                - code [ref=f29e118]: alt
+                - text: = branches,
+                - code [ref=f29e119]: par
+                - text: = parallel work.
+    - generic [ref=f29e120]:
+      - paragraph [ref=f29e121]: Telephony & Privacy
+      - heading "PNS — Virtual Number Pool" [level=2] [ref=f29e124]
+      - paragraph [ref=f29e125]:
+        - code [ref=f29e126]: POST
+        - text: serviceName
+        - code [ref=f29e127]: GSM_MASTER_SERVICE
+        - text: (~33-gateway allowlist).
+        - code [ref=f29e128]: ACTION
+        - text: 1 = add to pool, 2 = re-flag, 3 = assign / auto-allocate, 4 = release, 5 = bulk-convert (loop,
+        - code [ref=f29e129]: LIMIT
+        - text: 1–49, one query per iteration).
+        - code [ref=f29e130]: FLAG_IS_AVAILABLE
+        - text: ": 2 = available, 1 = assigned, 0 / -1 = two reclaimable buckets chosen by"
+        - code [ref=f29e131]: PNS_TYPE
+        - text: ". Reads:"
+        - code [ref=f29e132]: /obdnumber
+        - text: (resolves the supplier's
+        - code [ref=f29e133]: glusr_usr_im_gsm
+        - text: to a vendor type via a local JSON file) and
+        - code [ref=f29e134]: /wservce/glmaster/detail
+        - text: (
+        - code [ref=f29e135]: detail_from=gl_gsm_master
+        - text: ).
+      - article [ref=f29e136]:
+        - generic [ref=f29e143]:
+          - generic [ref=f29e144]: Business flowchart
+          - heading "A pool of virtual GSM numbers, leased to suppliers" [level=3] [ref=f29e145]
+        - generic [ref=f29e146]:
+          - paragraph [ref=f29e147]:
+            - text: Everything routes through one
+            - code [ref=f29e148]: ACTION
+            - text: "switch:"
+          - list [ref=f29e149]:
+            - listitem [ref=f29e150]:
+              - strong [ref=f29e151]: ACTION 1 — add to pool
+              - text: ": a new number row is inserted with"
+              - code [ref=f29e152]: FLAG_IS_AVAILABLE=2
+              - text: (available).
+            - listitem [ref=f29e153]:
+              - strong [ref=f29e154]: ACTION 2 — re-flag
+              - text: ": an existing number's availability flag is changed in place."
+            - listitem [ref=f29e155]:
+              - strong [ref=f29e156]: ACTION 3 — assign
+              - text: ": a specific number, or an auto-allocated one (a random available row for the supplier's vendor type). If the row picked was already assigned to someone,"
+              - code [ref=f29e157]: userupdate_pns_allocation
+              - text: swaps old → new by calling the downstream user-update API.
+            - listitem [ref=f29e158]:
+              - strong [ref=f29e159]: ACTION 4 — release
+              - text: ": calls the downstream user-update API with an empty"
+              - code [ref=f29e160]: IM_GSM
+              - text: . Only if that downstream call
+              - emphasis [ref=f29e161]: fails
+              - text: is the number flagged
+              - code [ref=f29e162]: "-1"
+              - text: locally, and an error email goes to the PNS team.
+            - listitem [ref=f29e163]:
+              - strong [ref=f29e164]: ACTION 5 — bulk-convert
+              - text: ": loops over up to 49 suppliers, one query each."
+          - paragraph [ref=f29e165]:
+            - text: A live
+            - code [ref=f29e166]: PNS_DELETION
+            - text: queue records why a number was freed (
+            - code [ref=f29e167]: PNS_DELETION_REASON
+            - text: audit table); the main replication queue is commented out.
+        - document [ref=f29e170]:
+          - generic [ref=f29e172]:
+            - generic [ref=f29e193]:
+              - generic [ref=f29e194]: "No"
+              - generic [ref=f29e198]: "Yes"
+              - generic [ref=f29e202]: 1 add
+              - generic [ref=f29e206]: 2 re-flag
+              - generic [ref=f29e210]: 3 assign
+              - generic [ref=f29e214]: "Yes"
+              - generic [ref=f29e218]: "No"
+              - generic [ref=f29e222]: "Yes"
+              - generic [ref=f29e226]: "No"
+              - generic [ref=f29e230]: 4 release
+              - generic [ref=f29e234]: "Yes"
+              - generic [ref=f29e238]: "No"
+              - generic [ref=f29e242]: 5 bulk
+            - generic [ref=f29e246]:
+              - generic [ref=f29e247]: Internal tool / opsPOST serviceName GSM_MASTER_SERVICE
+              - generic [ref=f29e253]: Gateway in ~33-caller allowlist?
+              - generic [ref=f29e258]: Reject
+              - generic [ref=f29e263]: ACTION
+              - generic [ref=f29e268]: INSERT number, FLAG_IS_AVAILABLE = 2
+              - generic [ref=f29e273]: UPDATE availability flag in place
+              - generic [ref=f29e278]: Specific number given?
+              - generic [ref=f29e283]: Use that number
+              - generic [ref=f29e288]: Pick random available rowfor supplier's vendor type
+              - generic [ref=f29e294]: Row already assigned?
+              - generic [ref=f29e299]: Swap old → new via user-update API
+              - generic [ref=f29e304]: Attach number via user-update API
+              - generic [ref=f29e309]: Flag row assigned (1)delete PNS_DELETION row for prev supplier
+              - generic [ref=f29e315]: Call user-update API with IM_GSM = empty
+              - generic [ref=f29e320]: Downstream ok?
+              - generic [ref=f29e325]: Number returns to poolINSERT PNS_DELETION_REASON
+              - generic [ref=f29e331]: Flag number -1 locallyemail PNS team
+              - generic [ref=f29e337]: Loop ≤ 49 suppliers, one query each
+      - article [ref=f29e342]:
+        - generic [ref=f29e351]:
+          - generic [ref=f29e352]: Data-flow diagram · Level 1
+          - heading "Where a virtual number is claimed, freed and looked up" [level=3] [ref=f29e353]
+        - generic [ref=f29e354]:
+          - paragraph [ref=f29e355]: "One master pool table, one dead replica path, one live audit path:"
+          - list [ref=f29e356]:
+            - listitem [ref=f29e357]:
+              - strong [ref=f29e358]: 1.0 Pool write
+              - text: applies the
+              - code [ref=f29e359]: ACTION
+              - text: to
+              - code [ref=f29e360]: D1
+              - text: (the GSM master pool).
+            - listitem [ref=f29e361]:
+              - strong [ref=f29e362]: 2.0 User-update call-out
+              - text: attaches or clears the number on the supplier via the standard user-update API for
+              - code [ref=f29e363]: ACTION
+              - text: 3 / 4.
+            - listitem [ref=f29e364]:
+              - strong [ref=f29e365]: 3.0 Replica consumers
+              - text: would mirror the pool into the auth / search copies — but the publish is commented out, so
+              - code [ref=f29e366]: D2
+              - text: drifts.
+            - listitem [ref=f29e367]:
+              - strong [ref=f29e368]: 4.0 Deletion-reason consumer
+              - text: writes the
+              - code [ref=f29e369]: PNS_DELETION_REASON
+              - text: audit table
+              - code [ref=f29e370]: D3
+              - text: .
+            - listitem [ref=f29e371]:
+              - strong [ref=f29e372]: 5.0 Reads
+              - text: resolve a supplier's OBD number and dump a pool row.
+        - document [ref=f29e375]:
+          - generic [ref=f29e377]:
+            - generic [ref=f29e386]:
+              - generic [ref=f29e387]: ACTION 1..5
+              - generic [ref=f29e391]: INSERT / UPDATE pool row
+              - generic [ref=f29e395]: ACTION 3 / 4
+              - generic [ref=f29e399]: attach / clear IM_GSM
+              - generic [ref=f29e403]: publish (dead)
+              - generic [ref=f29e407]: mirror pool
+              - generic [ref=f29e411]: ACTION 4 + reason
+              - generic [ref=f29e415]: INSERT reason
+              - generic [ref=f29e419]: /obdnumber, /glmaster/detail
+              - generic [ref=f29e423]: resolve vendor type / dump row
+            - generic [ref=f29e427]:
+              - generic [ref=f29e428]: Internal ops / tools
+              - generic [ref=f29e433]: Standard user-update API
+              - generic [ref=f29e438]: Caller (read)
+              - generic [ref=f29e443]: 1.0Pool write(ACTION switch)
+              - generic [ref=f29e449]: 2.0User-updatecall-out
+              - generic [ref=f29e455]: 3.0Replicaconsumers
+              - generic [ref=f29e461]: 4.0Deletion-reasonconsumer
+              - generic [ref=f29e467]: 5.0ReadsOBD + pool detail
+              - generic [ref=f29e473]: D1 GL_GSM_MASTERpool
+              - generic [ref=f29e479]: D2 auth / search pool copies(stale)
+              - generic [ref=f29e485]: D3 PNS_DELETION_REASONaudit
+              - generic [ref=f29e491]: PNS_SERVICE queue (commented out) + PNS_DELETION queue (live)
+      - article [ref=f29e496]:
+        - generic [ref=f29e502]:
+          - generic [ref=f29e503]: Sequence diagram · Actions 3 + 4
+          - heading "Allocating a virtual number, then releasing one" [level=3] [ref=f29e504]
+        - generic [ref=f29e505]:
+          - paragraph [ref=f29e506]: "An allocation followed by a release:"
+          - list [ref=f29e507]:
+            - listitem [ref=f29e508]:
+              - text: An internal tool calls the write API with
+              - code [ref=f29e509]: ACTION=3
+              - text: ; after the gateway check it picks a specific or random available number for the vendor type.
+            - listitem [ref=f29e510]:
+              - strong [ref=f29e511]: alt
+              - text: — if the chosen row was already assigned, the old holder's number is swapped out via the user-update API; otherwise it is attached directly.
+            - listitem [ref=f29e512]:
+              - text: The pool row is flagged assigned; a
+              - code [ref=f29e513]: PNS_DELETION
+              - text: row for the previous supplier is removed.
+            - listitem [ref=f29e514]:
+              - text: Later,
+              - code [ref=f29e515]: ACTION=4
+              - text: calls the user-update API with an empty
+              - code [ref=f29e516]: IM_GSM
+              - text: .
+              - strong [ref=f29e517]: alt
+              - text: — on downstream success the number returns to the pool; on failure it is flagged
+              - code [ref=f29e518]: "-1"
+              - text: and the PNS team is emailed.
+        - document [ref=f29e521]:
+          - generic [ref=f29e522]:
+            - generic [ref=f29e524]: PNS_DELETION
+            - generic [ref=f29e525]: queue
+          - generic [ref=f29e526]: user-update API
+          - generic [ref=f29e529]:
+            - generic [ref=f29e531]: GL_GSM_MASTE-
+            - generic [ref=f29e532]: R pool
+          - generic [ref=f29e533]:
+            - generic [ref=f29e535]: write-API
+            - generic [ref=f29e536]: GsmMaster
+          - generic [ref=f29e538]:
+            - generic [ref=f29e540]: PNS_DELETION
+            - generic [ref=f29e541]: queue
+          - generic [ref=f29e542]: user-update API
+          - generic [ref=f29e547]:
+            - generic [ref=f29e549]: GL_GSM_MASTE-
+            - generic [ref=f29e550]: R pool
+          - generic [ref=f29e552]:
+            - generic [ref=f29e554]: write-API
+            - generic [ref=f29e555]: GsmMaster
+          - generic [ref=f29e556]:
+            - generic [ref=f29e558]: alt
+            - generic [ref=f29e559]: "[row already assigned]"
+            - generic [ref=f29e560]: "[row free]"
+          - generic [ref=f29e561]: later - releasing a number
+          - generic [ref=f29e564]:
+            - generic [ref=f29e566]: alt
+            - generic [ref=f29e567]: "[downstream ok]"
+            - generic [ref=f29e568]: "[downstream fails]"
+          - generic [ref=f29e569]: Internal tool
+          - generic [ref=f29e574]: "POST ACTION = 3 {supplier,"
+          - generic [ref=f29e575]: "vendor_type}"
+          - generic [ref=f29e576]: "1"
+          - generic [ref=f29e577]: gateway allowlist
+          - generic [ref=f29e578]: check
+          - generic [ref=f29e580]: "2"
+          - generic [ref=f29e581]: pick specific or random
+          - generic [ref=f29e582]: available row
+          - generic [ref=f29e583]: "3"
+          - generic [ref=f29e584]: swap old GSM to new for prev + new supplier
+          - generic [ref=f29e585]: "4"
+          - generic [ref=f29e586]: attach IM_GSM to supplier
+          - generic [ref=f29e587]: "5"
+          - generic [ref=f29e588]: ok
+          - generic [ref=f29e589]: "6"
+          - generic [ref=f29e590]: flag row assigned (1)
+          - generic [ref=f29e591]: "7"
+          - generic [ref=f29e592]: delete PNS_DELETION row for prev supplier
+          - generic [ref=f29e593]: "8"
+          - generic [ref=f29e594]: allocation success
+          - generic [ref=f29e595]: "9"
+          - generic [ref=f29e596]: "POST ACTION = 4 {supplier,"
+          - generic [ref=f29e597]: "reason}"
+          - generic [ref=f29e598]: "10"
+          - generic [ref=f29e599]: user-update with IM_GSM = empty
+          - generic [ref=f29e600]: "11"
+          - generic [ref=f29e601]: success
+          - generic [ref=f29e602]: "12"
+          - generic [ref=f29e603]: number returns to pool
+          - generic [ref=f29e604]: "13"
+          - generic [ref=f29e605]: publish PNS_DELETION reason
+          - generic [ref=f29e606]: "14"
+          - generic [ref=f29e607]: failure
+          - generic [ref=f29e608]: "15"
+          - generic [ref=f29e609]: flag number -1 locally
+          - generic [ref=f29e610]: "16"
+          - generic [ref=f29e611]: error + PNS team emailed
+          - generic [ref=f29e612]: "17"
+          - generic [ref=f29e613]: Internal tool
+      - paragraph [ref=f29e618]:
+        - text: "Source:"
+        - code [ref=f29e619]: PNS KT
+        - text: business & technical docs. The
+        - code [ref=f29e620]: PNS_SERVICE
+        - text: replication publish is commented out, so the auth / search copies of the pool are starved; only
+        - code [ref=f29e621]: PNS_DELETION
+        - text: is live. The vendor-lock validation is dead code (
+        - code [ref=f29e622]: setvendor
+        - text: hardcoded to
+        - code [ref=f29e623]: "\"ALL\""
+        - text: ), and there is no cron — all flagged in the source doc.
+    - generic [ref=f29e624]:
+      - heading "Glossary" [level=2] [ref=f29e625]
+      - paragraph [ref=f29e626]: Business terms used above.
+      - generic [ref=f29e627]:
+        - heading "The pool" [level=3] [ref=f29e628]
+        - generic [ref=f29e631]:
+          - term [ref=f29e632]: PNS
+          - definition [ref=f29e633]: Privacy Number Service — a pool of virtual GSM numbers that sit in front of a supplier's real phone so buyers never see the real number.
+          - term [ref=f29e634]: IM_GSM
+          - definition [ref=f29e635]:
+            - text: The virtual number attached to a supplier (
+            - code [ref=f29e636]: glusr_usr_im_gsm
+            - text: ). Allocating sets it; releasing clears it.
+          - term [ref=f29e637]:
+            - code [ref=f29e638]: GL_GSM_MASTER
+          - definition [ref=f29e639]: The master pool table — one row per virtual number, with an availability flag and a vendor type.
+          - term [ref=f29e640]:
+            - code [ref=f29e641]: FLAG_IS_AVAILABLE
+          - definition [ref=f29e642]:
+            - text: 2 = available, 1 = assigned, 0 / -1 = two “reclaimable” buckets. Which reclaimable bucket is used is chosen by
+            - code [ref=f29e643]: PNS_TYPE
+            - text: .
+          - term [ref=f29e644]: Vendor type
+          - definition [ref=f29e645]: The telecom vendor a number belongs to; auto-allocation only picks a random row matching the supplier's vendor type.
+      - generic [ref=f29e646]:
+        - heading "The actions" [level=3] [ref=f29e647]
+        - generic [ref=f29e651]:
+          - term [ref=f29e652]:
+            - code [ref=f29e653]: ACTION
+            - text: 1 — add
+          - definition [ref=f29e654]: Insert a fresh number into the pool as available.
+          - term [ref=f29e655]:
+            - code [ref=f29e656]: ACTION
+            - text: 2 — re-flag
+          - definition [ref=f29e657]: Change an existing number's availability flag without moving it.
+          - term [ref=f29e658]:
+            - code [ref=f29e659]: ACTION
+            - text: 3 — assign
+          - definition [ref=f29e660]: Give a supplier a specific number, or auto-allocate a random available one. A swap via the user-update API happens if the chosen row was already held.
+          - term [ref=f29e661]:
+            - code [ref=f29e662]: ACTION
+            - text: 4 — release
+          - definition [ref=f29e663]:
+            - text: Clear the number off the supplier through the user-update API. The number only gets flagged
+            - code [ref=f29e664]: "-1"
+            - text: locally if that downstream call fails.
+          - term [ref=f29e665]:
+            - code [ref=f29e666]: ACTION
+            - text: 5 — bulk-convert
+          - definition [ref=f29e667]: A loop over up to 49 suppliers, one query per iteration.
+      - generic [ref=f29e668]:
+        - heading "Downstream & reads" [level=3] [ref=f29e669]
+        - generic [ref=f29e676]:
+          - term [ref=f29e677]:
+            - code [ref=f29e678]: PNS_DELETION_REASON
+          - definition [ref=f29e679]:
+            - text: An audit table written from the live
+            - code [ref=f29e680]: PNS_DELETION
+            - text: queue when a number is released with a reason; an
+            - code [ref=f29e681]: ACTION
+            - text: 3 re-assign deletes that supplier's row.
+          - term [ref=f29e682]: Starved replicas
+          - definition [ref=f29e683]:
+            - text: The auth / search copies of the pool are kept by a consumer whose publish is commented out, so they drift from
+            - code [ref=f29e684]: GL_GSM_MASTER
+            - text: .
+          - term [ref=f29e685]:
+            - code [ref=f29e686]: /obdnumber
+          - definition [ref=f29e687]:
+            - text: A read that resolves a supplier's virtual number to a vendor type and then to an outbound-dialler number via a local
+            - code [ref=f29e688]: vendor_obdnumber.json
+            - text: file.
+          - term [ref=f29e689]: OBD number
+          - definition [ref=f29e690]:
+            - text: Outbound-Dialler number — the number the platform's call system dials
+            - emphasis [ref=f29e691]: from
+            - text: when connecting a buyer and supplier.
+          - term [ref=f29e692]: GLID
+          - definition [ref=f29e693]: GlobalID — the unique internal identifier for the supplier.
+    - generic [ref=f29e694]: Generated from the Users-API KT docs · diagrams rendered with Mermaid.

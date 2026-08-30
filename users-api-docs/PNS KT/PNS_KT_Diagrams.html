@@ -1,0 +1,667 @@
+<meta charset="utf-8" />
+<title>PNS (Virtual Number Pool) &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API PNS (Virtual Number Pool) feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">PNS (Virtual Number Pool)</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="phone"></i> PNS (Virtual Number Pool)</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; allocate then release</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>PNS &mdash; Virtual Number Pool</h1>
+    <p class="lede">PNS manages a shared pool of virtual GSM (&ldquo;IM_GSM&rdquo;) numbers that mask a
+      supplier's real phone. One write endpoint drives the whole lifecycle through a single
+      numeric <code>ACTION</code> code: add a number to the pool, re-flag one, allocate one to a
+      supplier, release one back, or bulk-convert many. Allocation and release both call the
+      standard user-update API to actually attach or clear the number on the supplier. The
+      replication queue is commented out, so the auth / search copies of the pool drift; a
+      separate deletion-reason queue is live and feeds an audit table.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="phone"></i> Telephony &amp; Privacy</p>
+      <h2>PNS &mdash; Virtual Number Pool</h2>
+      <p><code>POST</code> serviceName <code>GSM_MASTER_SERVICE</code> (~33-gateway
+      allowlist). <code>ACTION</code> 1 = add to pool, 2 = re-flag, 3 = assign / auto-allocate,
+      4 = release, 5 = bulk-convert (loop, <code>LIMIT</code> 1&ndash;49, one query per
+      iteration). <code>FLAG_IS_AVAILABLE</code>: 2 = available, 1 = assigned, 0 / -1 = two
+      reclaimable buckets chosen by <code>PNS_TYPE</code>. Reads: <code>/obdnumber</code>
+      (resolves the supplier's <code>glusr_usr_im_gsm</code> to a vendor type via a local JSON
+      file) and <code>/wservce/glmaster/detail</code> (<code>detail_from=gl_gsm_master</code>).</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>A pool of virtual GSM numbers, leased to suppliers</h3></span>
+        </header>
+        <div class="explain">
+<p>Everything routes through one <code>ACTION</code> switch:</p>
+          <ul>
+            <li><strong>ACTION 1 &mdash; add to pool</strong>: a new number row is inserted with
+              <code>FLAG_IS_AVAILABLE=2</code> (available).</li>
+            <li><strong>ACTION 2 &mdash; re-flag</strong>: an existing number's availability flag
+              is changed in place.</li>
+            <li><strong>ACTION 3 &mdash; assign</strong>: a specific number, or an
+              auto-allocated one (a random available row for the supplier's vendor type). If the
+              row picked was already assigned to someone, <code>userupdate_pns_allocation</code>
+              swaps old &rarr; new by calling the downstream user-update API.</li>
+            <li><strong>ACTION 4 &mdash; release</strong>: calls the downstream user-update API
+              with an empty <code>IM_GSM</code>. Only if that downstream call <em>fails</em> is
+              the number flagged <code>-1</code> locally, and an error email goes to the PNS
+              team.</li>
+            <li><strong>ACTION 5 &mdash; bulk-convert</strong>: loops over up to 49 suppliers,
+              one query each.</li>
+          </ul>
+          <p>A live <code>PNS_DELETION</code> queue records why a number was freed
+          (<code>PNS_DELETION_REASON</code> audit table); the main replication queue is
+          commented out.</p>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Internal tool / ops<br/>POST serviceName GSM_MASTER_SERVICE"]:::actor --> G{"Gateway in ~33-caller allowlist?"}:::decision
+    G -- No --> RJ["Reject"]:::terminal
+    G -- Yes --> AC{"ACTION"}:::decision
+    AC -- "1 add" --> A1["INSERT number, FLAG_IS_AVAILABLE = 2"]:::system
+    AC -- "2 re-flag" --> A2["UPDATE availability flag in place"]:::system
+    AC -- "3 assign" --> A3{"Specific number given?"}:::decision
+    A3 -- Yes --> A3S["Use that number"]:::system
+    A3 -- No --> A3R["Pick random available row<br/>for supplier's vendor type"]:::system
+    A3S --> A3C{"Row already assigned?"}:::decision
+    A3R --> A3C
+    A3C -- Yes --> A3W["Swap old &rarr; new via user-update API"]:::external
+    A3C -- No --> A3A["Attach number via user-update API"]:::external
+    A3W --> A3F["Flag row assigned (1)<br/>delete PNS_DELETION row for prev supplier"]:::system
+    A3A --> A3F
+    AC -- "4 release" --> A4["Call user-update API with IM_GSM = empty"]:::external
+    A4 --> A4C{"Downstream ok?"}:::decision
+    A4C -- Yes --> A4OK["Number returns to pool<br/>INSERT PNS_DELETION_REASON"]:::system
+    A4C -- No --> A4E["Flag number -1 locally<br/>email PNS team"]:::terminal
+    AC -- "5 bulk" --> A5["Loop &le; 49 suppliers, one query each"]:::system
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where a virtual number is claimed, freed and looked up</h3></span>
+        </header>
+        <div class="explain">
+<p>One master pool table, one dead replica path, one live audit path:</p>
+          <ul>
+            <li><strong>1.0 Pool write</strong> applies the <code>ACTION</code> to
+              <code>D1</code> (the GSM master pool).</li>
+            <li><strong>2.0 User-update call-out</strong> attaches or clears the number on the
+              supplier via the standard user-update API for <code>ACTION</code> 3 / 4.</li>
+            <li><strong>3.0 Replica consumers</strong> would mirror the pool into the auth /
+              search copies &mdash; but the publish is commented out, so <code>D2</code>
+              drifts.</li>
+            <li><strong>4.0 Deletion-reason consumer</strong> writes the
+              <code>PNS_DELETION_REASON</code> audit table <code>D3</code>.</li>
+            <li><strong>5.0 Reads</strong> resolve a supplier's OBD number and dump a pool row.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    OPS["Internal ops / tools"]:::ext
+    UUP["Standard user-update API"]:::ext
+    RDR["Caller (read)"]:::ext
+
+    P1(("1.0<br/>Pool write<br/>(ACTION switch)")):::proc
+    P2(("2.0<br/>User-update<br/>call-out")):::proc
+    P3(("3.0<br/>Replica<br/>consumers")):::proc
+    P4(("4.0<br/>Deletion-reason<br/>consumer")):::proc
+    P5(("5.0<br/>Reads<br/>OBD + pool detail")):::proc
+
+    D1[("D1 GL_GSM_MASTER<br/>pool")]:::store
+    D2[("D2 auth / search pool copies<br/>(stale)")]:::store
+    D3[("D3 PNS_DELETION_REASON<br/>audit")]:::store
+    Q[["PNS_SERVICE queue (commented out) + PNS_DELETION queue (live)"]]:::store
+
+    OPS -->|"ACTION 1..5"| P1
+    P1 -->|"INSERT / UPDATE pool row"| D1
+    P1 -->|"ACTION 3 / 4"| P2
+    P2 -->|"attach / clear IM_GSM"| UUP
+    P1 -.->|"publish (dead)"| Q
+    Q -.-> P3
+    P3 -.->|"mirror pool"| D2
+    P1 -->|"ACTION 4 + reason"| Q
+    Q --> P4
+    P4 -->|"INSERT reason"| D3
+    RDR -->|"/obdnumber, /glmaster/detail"| P5
+    P5 -->|"resolve vendor type / dump row"| D1
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Actions 3 + 4</span><h3>Allocating a virtual number, then releasing one</h3></span>
+        </header>
+        <div class="explain">
+<p>An allocation followed by a release:</p>
+          <ol>
+            <li>An internal tool calls the write API with <code>ACTION=3</code>; after the
+              gateway check it picks a specific or random available number for the vendor type.</li>
+            <li><strong>alt</strong> &mdash; if the chosen row was already assigned, the old
+              holder's number is swapped out via the user-update API; otherwise it is attached
+              directly.</li>
+            <li>The pool row is flagged assigned; a <code>PNS_DELETION</code> row for the
+              previous supplier is removed.</li>
+            <li>Later, <code>ACTION=4</code> calls the user-update API with an empty
+              <code>IM_GSM</code>. <strong>alt</strong> &mdash; on downstream success the number
+              returns to the pool; on failure it is flagged <code>-1</code> and the PNS team is
+              emailed.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor T as Internal tool
+    participant API as write-API<br/>GsmMaster
+    participant DB as GL_GSM_MASTER pool
+    participant UU as user-update API
+    participant MQ as PNS_DELETION queue
+
+    T->>API: POST ACTION = 3 {supplier, vendor_type}
+    API->>API: gateway allowlist check
+    API->>DB: pick specific or random available row
+    alt row already assigned
+        API->>UU: swap old GSM to new for prev + new supplier
+    else row free
+        API->>UU: attach IM_GSM to supplier
+    end
+    UU-->>API: ok
+    API->>DB: flag row assigned (1)
+    API->>MQ: delete PNS_DELETION row for prev supplier
+    API-->>T: allocation success
+
+    Note over T,MQ: later - releasing a number
+    T->>API: POST ACTION = 4 {supplier, reason}
+    API->>UU: user-update with IM_GSM = empty
+    alt downstream ok
+        UU-->>API: success
+        API->>DB: number returns to pool
+        API->>MQ: publish PNS_DELETION reason
+    else downstream fails
+        UU-->>API: failure
+        API->>DB: flag number -1 locally
+        API-->>T: error + PNS team emailed
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>PNS KT</code> business &amp; technical docs. The
+        <code>PNS_SERVICE</code> replication publish is commented out, so the auth / search
+        copies of the pool are starved; only <code>PNS_DELETION</code> is live. The vendor-lock
+        validation is dead code (<code>setvendor</code> hardcoded to <code>&quot;ALL&quot;</code>),
+        and there is no cron &mdash; all flagged in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="phone"></i> The pool</h3>
+        <dl>
+          <dt>PNS</dt>
+          <dd>Privacy Number Service &mdash; a pool of virtual GSM numbers that sit in front of a supplier's real phone so buyers never see the real number.</dd>
+          <dt>IM_GSM</dt>
+          <dd>The virtual number attached to a supplier (<code>glusr_usr_im_gsm</code>). Allocating sets it; releasing clears it.</dd>
+          <dt><code>GL_GSM_MASTER</code></dt>
+          <dd>The master pool table &mdash; one row per virtual number, with an availability flag and a vendor type.</dd>
+          <dt><code>FLAG_IS_AVAILABLE</code></dt>
+          <dd>2 = available, 1 = assigned, 0 / -1 = two &ldquo;reclaimable&rdquo; buckets. Which reclaimable bucket is used is chosen by <code>PNS_TYPE</code>.</dd>
+          <dt>Vendor type</dt>
+          <dd>The telecom vendor a number belongs to; auto-allocation only picks a random row matching the supplier's vendor type.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="list-ordered"></i> The actions</h3>
+        <dl>
+          <dt><code>ACTION</code> 1 &mdash; add</dt>
+          <dd>Insert a fresh number into the pool as available.</dd>
+          <dt><code>ACTION</code> 2 &mdash; re-flag</dt>
+          <dd>Change an existing number's availability flag without moving it.</dd>
+          <dt><code>ACTION</code> 3 &mdash; assign</dt>
+          <dd>Give a supplier a specific number, or auto-allocate a random available one. A swap via the user-update API happens if the chosen row was already held.</dd>
+          <dt><code>ACTION</code> 4 &mdash; release</dt>
+          <dd>Clear the number off the supplier through the user-update API. The number only gets flagged <code>-1</code> locally if that downstream call fails.</dd>
+          <dt><code>ACTION</code> 5 &mdash; bulk-convert</dt>
+          <dd>A loop over up to 49 suppliers, one query per iteration.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="share-2"></i> Downstream &amp; reads</h3>
+        <dl>
+          <dt><code>PNS_DELETION_REASON</code></dt>
+          <dd>An audit table written from the live <code>PNS_DELETION</code> queue when a number is released with a reason; an <code>ACTION</code> 3 re-assign deletes that supplier's row.</dd>
+          <dt>Starved replicas</dt>
+          <dd>The auth / search copies of the pool are kept by a consumer whose publish is commented out, so they drift from <code>GL_GSM_MASTER</code>.</dd>
+          <dt><code>/obdnumber</code></dt>
+          <dd>A read that resolves a supplier's virtual number to a vendor type and then to an outbound-dialler number via a local <code>vendor_obdnumber.json</code> file.</dd>
+          <dt>OBD number</dt>
+          <dd>Outbound-Dialler number &mdash; the number the platform's call system dials <em>from</em> when connecting a buyer and supplier.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>

@@ -1,0 +1,401 @@
+- generic [ref=f30e2]:
+  - complementary [ref=f30e3]:
+    - paragraph [ref=f30e4]: IndiaMART · Users-API KT
+    - paragraph [ref=f30e5]: PNS Setting
+    - navigation [ref=f30e6]:
+      - list [ref=f30e7]:
+        - listitem [ref=f30e8]:
+          - link "How to read these" [ref=f30e9] [cursor=pointer]:
+            - /url: "#legend"
+        - listitem [ref=f30e13]:
+          - link "PNS Setting" [ref=f30e14] [cursor=pointer]:
+            - /url: "#feature"
+        - listitem [ref=f30e18]:
+          - link "Business flowchart" [ref=f30e19] [cursor=pointer]:
+            - /url: "#d-biz"
+        - listitem [ref=f30e20]:
+          - link "Data-flow diagram" [ref=f30e21] [cursor=pointer]:
+            - /url: "#d-dfd"
+        - listitem [ref=f30e22]:
+          - link "Sequence — save a preference" [ref=f30e23] [cursor=pointer]:
+            - /url: "#d-seq"
+        - listitem [ref=f30e24]:
+          - link "Glossary" [ref=f30e25] [cursor=pointer]:
+            - /url: "#glossary"
+  - main [ref=f30e29]:
+    - paragraph [ref=f30e30]: Knowledge Transfer · Engineering
+    - heading "PNS Setting" [level=1] [ref=f30e31]
+    - paragraph [ref=f30e32]:
+      - text: PNS Setting stores a supplier's off-hours call-routing preferences — which of their mobiles, landlines or additional-contact numbers should still receive calls outside business hours (
+      - code [ref=f30e33]: IIL_PNS_SETTING
+      - text: ). One
+      - code [ref=f30e34]: POST /pnssetting
+      - text: endpoint inserts, updates or deletes a mapping per number-type. The contact number is always re-derived server-side from the profile, never trusted from the request. A separate consumer auto-re-syncs these preferences whenever the supplier changes a phone number in the general profile-edit flow, and that path — unlike the direct API — enforces a five-mapping cap.
+    - generic [ref=f30e35]:
+      - heading "How to read these diagrams" [level=2] [ref=f30e36]
+      - generic [ref=f30e37]:
+        - generic [ref=f30e38]:
+          - heading "Node shape & colour" [level=5] [ref=f30e39]
+          - list [ref=f30e40]:
+            - listitem [ref=f30e41]: Rectangle — actor / external entity
+            - listitem [ref=f30e43]: Rounded — system step / process
+            - listitem [ref=f30e45]: Diamond — decision · cylinder — data store
+            - listitem [ref=f30e47]: External system / third party
+            - listitem [ref=f30e49]: Terminal outcome
+        - generic [ref=f30e51]:
+          - heading "Role icons (page chrome)" [level=5] [ref=f30e52]
+          - list [ref=f30e53]:
+            - listitem [ref=f30e54]: Supplier / buyer / internal admin
+            - listitem [ref=f30e59]: System process / async consumer
+            - listitem [ref=f30e72]: External / third-party service
+            - listitem [ref=f30e76]: Database message queue
+            - listitem [ref=f30e86]: Notification / ops alert
+        - generic [ref=f30e91]:
+          - heading "Diagram types" [level=5] [ref=f30e92]
+          - list [ref=f30e93]:
+            - listitem [ref=f30e94]:
+              - generic [ref=f30e100]:
+                - strong [ref=f30e101]: Business flowchart
+                - text: — decisions & outcomes, no code.
+            - listitem [ref=f30e102]:
+              - generic [ref=f30e110]:
+                - strong [ref=f30e111]: DFD (Level 1)
+                - text: — numbered processes,
+                - code [ref=f30e112]: D1…Dn
+                - text: stores, data on every arrow.
+            - listitem [ref=f30e113]:
+              - generic [ref=f30e118]:
+                - strong [ref=f30e119]: Sequence
+                - text: — lifelines in call order;
+                - code [ref=f30e120]: alt
+                - text: = branches,
+                - code [ref=f30e121]: par
+                - text: = parallel work.
+    - generic [ref=f30e122]:
+      - paragraph [ref=f30e123]: Telephony & Privacy
+      - heading "PNS Setting" [level=2] [ref=f30e127]
+      - paragraph [ref=f30e128]:
+        - code [ref=f30e129]: POST /pnssetting
+        - text: serviceName
+        - code [ref=f30e130]: PNS_SETTING_SERVICE
+        - text: (gateways GLADMIN / MAPI / BUYERMY / SELLERMY / ANDROID / IOS). Types
+        - code [ref=f30e131]: M1
+        - text: /
+        - code [ref=f30e132]: M2
+        - text: /
+        - code [ref=f30e133]: L1
+        - text: /
+        - code [ref=f30e134]: L2
+        - text: are general (no contact id);
+        - code [ref=f30e135]: M
+        - text: /
+        - code [ref=f30e136]: L
+        - text: /
+        - code [ref=f30e137]: T
+        - text: are additional-contact and need a contact id;
+        - code [ref=f30e138]: D
+        - text: is a sentinel (
+        - code [ref=f30e139]: action_flag="d"
+        - text: ) that deletes all rows for a (supplier, contact) pair.
+        - code [ref=f30e140]: offhrs_flag
+        - text: is 1 / 2 / 3 for insert / update and 0 for delete; reads treat 2 / 3 as “off-hours active”.
+      - article [ref=f30e141]:
+        - generic [ref=f30e148]:
+          - generic [ref=f30e149]: Business flowchart
+          - heading "Which numbers ring after business hours" [level=3] [ref=f30e150]
+        - generic [ref=f30e151]:
+          - paragraph [ref=f30e152]: "One endpoint, several type families:"
+          - list [ref=f30e153]:
+            - listitem [ref=f30e154]:
+              - text: The GSM must already exist for the supplier, or the request fails with “GSM Number does not exist”. The contact number is
+              - emphasis [ref=f30e155]: always
+              - text: re-derived from
+              - code [ref=f30e156]: GLUSR_USR
+              - text: /
+              - code [ref=f30e157]: GLUSR_USR_ADDT_CONTACT
+              - text: ; a non-numeric result becomes “INVALID”.
+            - listitem [ref=f30e158]:
+              - strong [ref=f30e159]:
+                - text: General types (
+                - code [ref=f30e160]: M1
+                - text: /
+                - code [ref=f30e161]: M2
+                - text: /
+                - code [ref=f30e162]: L1
+                - text: /
+                - code [ref=f30e163]: L2
+                - text: )
+              - text: carry no contact id;
+              - strong [ref=f30e164]:
+                - text: additional-contact types (
+                - code [ref=f30e165]: M
+                - text: /
+                - code [ref=f30e166]: L
+                - text: /
+                - code [ref=f30e167]: T
+                - text: )
+              - text: require one.
+            - listitem [ref=f30e168]:
+              - text: A number can only map to one type. If the same number arrives under a second type,
+              - code [ref=f30e169]: HandleDuplicatePnsUpdate
+              - text: keeps the row with the higher (or equal)
+              - code [ref=f30e170]: offhrs_flag
+              - text: and silently deletes the other.
+            - listitem [ref=f30e171]:
+              - text: Insert is
+              - code [ref=f30e172]: ON CONFLICT DO NOTHING
+              - text: plus an explicit “is this mapping already there?” pre-check.
+            - listitem [ref=f30e173]:
+              - text: The
+              - strong [ref=f30e174]: max-five-mappings
+              - text: cap is disabled in this write API but enforced in the auto-sync consumer (Flow C).
+            - listitem [ref=f30e175]:
+              - text: Only
+              - strong [ref=f30e176]: delete
+              - text: writes an audit trail; insert / update do not.
+        - document [ref=f30e179]:
+          - generic [ref=f30e181]:
+            - generic [ref=f30e196]:
+              - generic [ref=f30e197]: "No"
+              - generic [ref=f30e201]: "Yes"
+              - generic [ref=f30e205]: M1 / M2 / L1 / L2 (general)
+              - generic [ref=f30e209]: M / L / T (needs contact id)
+              - generic [ref=f30e213]: D sentinel (action_flag d)
+              - generic [ref=f30e217]: 1 / 2 / 3 insert or update
+              - generic [ref=f30e221]: 0 delete
+              - generic [ref=f30e225]: "Yes"
+              - generic [ref=f30e229]: "No"
+            - generic [ref=f30e233]:
+              - generic [ref=f30e234]:
+                - generic [ref=f30e235]: "Flow C: auto-resync"
+                - generic [ref=f30e241]:
+                  - generic [ref=f30e242]: USER_UPSERT_ADDITIONAL consumerre-calls /pnssetting over HTTP
+                  - generic [ref=f30e248]: Supplier edits mobile / landline / GSMin general profile-edit
+                  - generic [ref=f30e254]: Five-mapping cap enforced here
+              - generic [ref=f30e259]: Supplier app / adminPOST /pnssetting
+              - generic [ref=f30e265]: Gateway allowed?+ GSM exists for supplier?
+              - generic [ref=f30e271]: Reject (e.g. GSM Number does not exist)
+              - generic [ref=f30e276]: Re-derive contact number from profile(non-numeric → INVALID)
+              - generic [ref=f30e282]: Type family
+              - generic [ref=f30e287]: offhrs_flag
+              - generic [ref=f30e292]: "deleteById: remove ALL rowsfor (supplier, contact)"
+              - generic [ref=f30e298]: Pre-check + INSERT ON CONFLICT DO NOTHING
+              - generic [ref=f30e303]: Same number under another type?
+              - generic [ref=f30e308]: Keep higher offhrs_flag,silently delete the other row
+              - generic [ref=f30e314]: Saved
+              - generic [ref=f30e319]: Write audit trail (delete only)
+              - generic [ref=f30e324]: Deleted
+      - article [ref=f30e329]:
+        - generic [ref=f30e338]:
+          - generic [ref=f30e339]: Data-flow diagram · Level 1
+          - heading "Where an off-hours routing preference is written and read" [level=3] [ref=f30e340]
+        - generic [ref=f30e341]:
+          - paragraph [ref=f30e342]: "One table, one auto-resync consumer, one delete-cascade queue:"
+          - list [ref=f30e343]:
+            - listitem [ref=f30e344]:
+              - strong [ref=f30e345]: 1.0 Validate & write
+              - text: re-derives the number, resolves the type and inserts / updates / deletes
+              - code [ref=f30e346]: D1
+              - text: .
+            - listitem [ref=f30e347]:
+              - strong [ref=f30e348]: 2.0 Duplicate-number resolver
+              - text: collapses a number that appears under two types, keeping the higher
+              - code [ref=f30e349]: offhrs_flag
+              - text: .
+            - listitem [ref=f30e350]:
+              - strong [ref=f30e351]: 3.0 Auto-resync consumer
+              - text: re-calls
+              - code [ref=f30e352]: /pnssetting
+              - text: over HTTP when the general profile-edit flow changes a phone number, enforcing the five-cap.
+            - listitem [ref=f30e353]:
+              - strong [ref=f30e354]: 4.0 Delete-cascade
+              - text: queues an
+              - code [ref=f30e355]: IIL_PNS_SETTING
+              - text: delete when an additional contact is removed.
+            - listitem [ref=f30e356]:
+              - strong [ref=f30e357]: 5.0 Reads
+              - text: return one supplier's full detail, or a bulk check of which GLIDs have an active off-hours flag.
+        - document [ref=f30e360]:
+          - generic [ref=f30e362]:
+            - generic [ref=f30e376]:
+              - generic [ref=f30e377]: type, offhrs_flag, contact id?
+              - generic [ref=f30e381]: read real number
+              - generic [ref=f30e385]: INSERT / UPDATE / DELETE
+              - generic [ref=f30e389]: drop lower-flag row
+              - generic [ref=f30e393]: delete only
+              - generic [ref=f30e397]: phone changed
+              - generic [ref=f30e401]: HTTP re-call /pnssetting (cap 5)
+              - generic [ref=f30e405]: additional contact removed
+              - generic [ref=f30e409]: single glid / bulk glids
+              - generic [ref=f30e413]: detail / active-flag check
+            - generic [ref=f30e417]:
+              - generic [ref=f30e418]: Supplier app / admin
+              - generic [ref=f30e423]: General profile-edit flow
+              - generic [ref=f30e428]: Caller (read)
+              - generic [ref=f30e433]: 1.0Validate & writeinsert / update / delete
+              - generic [ref=f30e439]: 2.0Duplicate-numberresolver
+              - generic [ref=f30e445]: 3.0Auto-resyncconsumer
+              - generic [ref=f30e451]: 4.0Delete-cascadequeue
+              - generic [ref=f30e457]: 5.0Readssingle + bulk
+              - generic [ref=f30e463]: D1 IIL_PNS_SETTING
+              - generic [ref=f30e468]: D2 GLUSR_USR / GLUSR_USR_ADDT_CONTACT(number re-derived)
+              - generic [ref=f30e474]: D3 delete audit trail
+              - generic [ref=f30e479]: USER_UPSERT_ADDITIONAL + IIL_PNS_SETTING delete queue
+      - article [ref=f30e484]:
+        - generic [ref=f30e490]:
+          - generic [ref=f30e491]: Sequence diagram · Flow A + C
+          - heading "Saving an off-hours preference, and the auto-resync" [level=3] [ref=f30e492]
+        - generic [ref=f30e493]:
+          - paragraph [ref=f30e494]: "A direct save, then an automatic re-sync:"
+          - list [ref=f30e495]:
+            - listitem [ref=f30e496]: The API checks the gateway, confirms the GSM exists, and re-derives the contact number from the profile (never from the request).
+            - listitem [ref=f30e497]:
+              - strong [ref=f30e498]: alt
+              - text: — insert / update (
+              - code [ref=f30e499]: offhrs_flag
+              - text: 1–3) runs
+              - code [ref=f30e500]: ON CONFLICT DO NOTHING
+              - text: after a pre-check; delete (
+              - code [ref=f30e501]: offhrs_flag
+              - text: 0, or the
+              - code [ref=f30e502]: D
+              - text: sentinel) removes rows and writes the only audit trail this feature keeps.
+            - listitem [ref=f30e503]: If the same number now maps to two types, the lower-flag row is dropped.
+            - listitem [ref=f30e504]:
+              - text: Later, the supplier changes a mobile in the general profile-edit flow; the
+              - code [ref=f30e505]: USER_UPSERT_ADDITIONAL
+              - text: consumer calls
+              - code [ref=f30e506]: /pnssetting
+              - text: again over HTTP to re-sync, and here the five-mapping cap is enforced.
+        - document [ref=f30e509]:
+          - generic [ref=f30e510]:
+            - generic [ref=f30e512]: USER_UPSERT_A-
+            - generic [ref=f30e513]: DDITIONAL
+            - generic [ref=f30e514]: consumer
+          - generic [ref=f30e515]: IIL_PNS_SETTING
+          - generic [ref=f30e518]: profile tables
+          - generic [ref=f30e521]:
+            - generic [ref=f30e523]: write-API
+            - generic [ref=f30e524]: PnsSetting
+          - generic [ref=f30e526]:
+            - generic [ref=f30e528]: USER_UPSERT_A-
+            - generic [ref=f30e529]: DDITIONAL
+            - generic [ref=f30e530]: consumer
+          - generic [ref=f30e531]: IIL_PNS_SETTING
+          - generic [ref=f30e535]: profile tables
+          - generic [ref=f30e540]:
+            - generic [ref=f30e542]: write-API
+            - generic [ref=f30e543]: PnsSetting
+          - generic [ref=f30e544]:
+            - generic [ref=f30e546]: alt
+            - generic [ref=f30e547]: "[offhrs_flag 1 / 2 / 3 (insert or update)]"
+            - generic [ref=f30e548]: "[offhrs_flag 0 or D sentinel (delete)]"
+          - generic [ref=f30e549]: later - supplier edits a phone in general profile-edit
+          - generic [ref=f30e552]: Supplier app
+          - generic [ref=f30e557]: "POST /pnssetting {type,"
+          - generic [ref=f30e558]: "offhrs_flag, contact id?}"
+          - generic [ref=f30e559]: "1"
+          - generic [ref=f30e560]: gateway check
+          - generic [ref=f30e562]: "2"
+          - generic [ref=f30e563]: confirm GSM exists +
+          - generic [ref=f30e564]: re-derive real number
+          - generic [ref=f30e565]: "3"
+          - generic [ref=f30e566]: pre-check then INSERT ON CONFLICT DO NOTHING
+          - generic [ref=f30e567]: "4"
+          - generic [ref=f30e568]: if number now maps to two types, drop lower-flag row
+          - generic [ref=f30e569]: "5"
+          - generic [ref=f30e570]: delete row(s) for (supplier, contact)
+          - generic [ref=f30e571]: "6"
+          - generic [ref=f30e572]: write delete audit trail
+          - generic [ref=f30e573]: "7"
+          - generic [ref=f30e574]: saved
+          - generic [ref=f30e575]: "8"
+          - generic [ref=f30e576]: USER_UPSERT_ADDITIONAL message
+          - generic [ref=f30e577]: "9"
+          - generic [ref=f30e578]: HTTP re-call /pnssetting to re-sync
+          - generic [ref=f30e579]: "10"
+          - generic [ref=f30e580]: apply, enforcing the five-mapping cap
+          - generic [ref=f30e581]: "11"
+          - generic [ref=f30e582]: synced
+          - generic [ref=f30e583]: "12"
+          - generic [ref=f30e584]: Supplier app
+      - paragraph [ref=f30e589]:
+        - text: "Source:"
+        - code [ref=f30e590]: PNS Setting KT
+        - text: business & technical docs. The max-five-mappings cap is disabled in the write API and only enforced in the auto-sync consumer, so a direct GLADMIN caller can exceed it. Only delete writes history; the exact meaning of
+        - code [ref=f30e591]: offhrs_flag
+        - text: 1 vs 2 vs 3 is an open question, and the contact-deletion cascade into
+        - code [ref=f30e592]: IIL_PNS_SETTING
+        - text: is queued, not transactional — all flagged in the source doc.
+    - generic [ref=f30e593]:
+      - heading "Glossary" [level=2] [ref=f30e594]
+      - paragraph [ref=f30e595]: Business terms used above.
+      - generic [ref=f30e596]:
+        - heading "The preference" [level=3] [ref=f30e597]
+        - generic [ref=f30e601]:
+          - term [ref=f30e602]: Off-hours routing
+          - definition [ref=f30e603]: Whether a given number keeps ringing outside business hours. That is the only thing this feature decides.
+          - term [ref=f30e604]:
+            - code [ref=f30e605]: IIL_PNS_SETTING
+          - definition [ref=f30e606]: The table holding one row per (supplier, number-type, contact) mapping.
+          - term [ref=f30e607]:
+            - code [ref=f30e608]: offhrs_flag
+          - definition [ref=f30e609]: 1 / 2 / 3 mean insert-or-update (all three are “set” values); 0 means delete. Reads treat 2 and 3 as “off-hours active”.
+          - term [ref=f30e610]: Re-derived contact number
+          - definition [ref=f30e611]: The actual phone number is always read back from the profile tables server-side; the number in the request is never trusted. A non-numeric result is stored as “INVALID”.
+          - term [ref=f30e612]: GSM must exist
+          - definition [ref=f30e613]: The supplier must already have a virtual GSM number, or the request is rejected with “GSM Number does not exist”.
+      - generic [ref=f30e614]:
+        - heading "Number types" [level=3] [ref=f30e615]
+        - generic [ref=f30e619]:
+          - term [ref=f30e620]:
+            - code [ref=f30e621]: M1
+            - text: /
+            - code [ref=f30e622]: M2
+          - definition [ref=f30e623]: Primary and alternate mobile — general types, no contact id needed.
+          - term [ref=f30e624]:
+            - code [ref=f30e625]: L1
+            - text: /
+            - code [ref=f30e626]: L2
+          - definition [ref=f30e627]: Primary and secondary landline — general types, no contact id needed.
+          - term [ref=f30e628]:
+            - code [ref=f30e629]: M
+            - text: /
+            - code [ref=f30e630]: L
+            - text: /
+            - code [ref=f30e631]: T
+          - definition [ref=f30e632]: Additional-contact mobile / landline / tollfree — each needs a contact id.
+          - term [ref=f30e633]:
+            - code [ref=f30e634]: D
+            - text: sentinel
+          - definition [ref=f30e635]:
+            - text: Not a real type; with
+            - code [ref=f30e636]: action_flag="d"
+            - text: it deletes every mapping row for a (supplier, contact) pair at once.
+          - term [ref=f30e637]: Duplicate-number resolution
+          - definition [ref=f30e638]:
+            - text: A number can map to only one type; if it turns up under two, the row with the higher (or equal)
+            - code [ref=f30e639]: offhrs_flag
+            - text: survives and the other is silently deleted.
+      - generic [ref=f30e640]:
+        - heading "Automatic sync & reads" [level=3] [ref=f30e641]
+        - generic [ref=f30e647]:
+          - term [ref=f30e648]: Auto-resync (Flow C)
+          - definition [ref=f30e649]:
+            - text: When a supplier changes a mobile / landline / GSM in the ordinary profile-edit flow, a
+            - code [ref=f30e650]: USER_UPSERT_ADDITIONAL
+            - text: consumer re-calls
+            - code [ref=f30e651]: /pnssetting
+            - text: over HTTP so the preferences follow the new number.
+          - term [ref=f30e652]: Five-mapping cap
+          - definition [ref=f30e653]: A limit of five active mappings per supplier — enforced only on the auto-resync path, not on direct API calls.
+          - term [ref=f30e654]: Delete-cascade
+          - definition [ref=f30e655]:
+            - text: Removing an additional contact elsewhere queues a delete of its
+            - code [ref=f30e656]: IIL_PNS_SETTING
+            - text: rows; there is a brief window where the contact is gone but its mapping is not.
+          - term [ref=f30e657]: Bulk read
+          - definition [ref=f30e658]: Up to ten comma-separated GLIDs; the response says which of them have an off-hours flag of 2 or 3.
+          - term [ref=f30e659]: GLID
+          - definition [ref=f30e660]: GlobalID — the unique internal identifier for the supplier.
+    - generic [ref=f30e661]: Generated from the Users-API KT docs · diagrams rendered with Mermaid.
