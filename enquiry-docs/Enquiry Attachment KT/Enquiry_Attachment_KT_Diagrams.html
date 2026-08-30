@@ -1,0 +1,658 @@
+<meta charset="utf-8" />
+<title>Enquiry Attachment &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Enquiry Attachment feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Enquiry Attachment</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="paperclip"></i> Enquiry Attachment</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; direct save + moderation</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Enquiry Attachment</h1>
+    <p class="lede">Enquiry Attachment records the images and documents a buyer attaches to an enquiry,
+      linked to its Query ID. There are two structurally different write paths into the same
+      <code>DIR_QUERY_ATTACHMENT</code> table: a synchronous write API that trusts the client's
+      paths and does nothing else, and a separate queue consumer that runs image moderation,
+      fetches a permanent storage URL, and conditionally feeds Lead-Management enrichment. A
+      third path reads the stored attachments back when a waiting enquiry becomes a purchased
+      lead and forwards them to the Buy-Leads system.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="paperclip"></i> Lead Capture Add-on</p>
+      <h2>Enquiry Attachment</h2>
+      <p><strong>Write path A</strong>: <code>POST /enquiry/enquiryAttachment</code>
+      (before <code>middleware.Validation</code>). Needs a numeric Query ID, a non-empty ModID,
+      at least one image or document, and an <code>attach_type_id</code> on every one; a single
+      multi-row <code>INSERT</code> follows, with no status column, no queue, no Kafka.
+      <strong>Write path B</strong>: the <code>ENQUIRY_ATTACHMENT_WORKER</code> consumer (its
+      publisher was not found in the repos) inserts a narrower row with
+      <code>DIR_QRY_ATTACHEMENT_STATUS</code>, moderating only the first original image and
+      applying its verdict to all; approved images get a permanent URL, and if
+      <code>DIR_QUERY_MAIL_SEND</code> is set and an attachment is approved it publishes Kafka
+      topic <code>LMS_LEADS_ENRICHMENT</code>. <strong>Flow C</strong>: the FENQ bot reads
+      <code>dir_query_attachment</code> (no status filter) and POSTs it to the Buy-Leads
+      <code>saveblattach</code> API.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>Images and documents on an enquiry</h3></span>
+        </header>
+        <div class="explain">
+<p>Two independent write paths plus a forwarding read:</p>
+          <ul>
+            <li><strong>Flow A &mdash; direct save</strong>: the buyer's app uploads image /
+              document paths with the enquiry's Query ID; after basic validation the rows are
+              written straight to the DB and the buyer gets an immediate success. No moderation,
+              no notification.</li>
+            <li><strong>Flow B &mdash; moderation &amp; enrichment</strong>: a separate queued
+              message re-inserts the attachment with a moderation status. Only images are
+              screened (documents are auto-approved); an approved image gets a permanent URL,
+              and if the enquiry is flagged for mail an approved attachment is pushed to
+              Lead-Management enrichment.</li>
+            <li><strong>Flow C &mdash; lead transfer</strong>: when the FENQ bot turns a waiting
+              enquiry into a purchased Business Lead, it re-reads every stored attachment for
+              that enquiry &mdash; regardless of which path wrote it or its status &mdash; and
+              forwards it to the Buy-Leads system.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    subgraph FA ["Flow A: direct save (synchronous)"]
+        direction TB
+        A["Buyer app uploads image / document + Query ID"]:::actor --> V{"Query ID numeric? ModID present?<br/>at least one attachment? each has a type id?"}:::decision
+        V -- No --> RJ["Reject (HTTP 200 + error body)"]:::terminal
+        V -- Yes --> INS["Single multi-row INSERT into DIR_QUERY_ATTACHMENT<br/>(trusts client paths, no status, no queue)"]:::system
+        INS --> OK["Attachment saved successfully"]:::terminal
+    end
+
+    subgraph FB ["Flow B: moderation and enrichment (separate pipeline)"]
+        direction TB
+        M["Queued attachment message<br/>(publisher not found in repos)"]:::external --> MD{"Document or image?"}:::decision
+        MD -- Document --> DA["Status = approved (no review)"]:::system
+        MD -- Image --> MOD["Moderate first original image via review API<br/>(verdict applied to all images)"]:::external
+        MOD --> MR{"Approved?"}:::decision
+        MR -- Yes --> PURL["Fetch permanent storage URL"]:::external
+        MR -- No --> REJ["Status = rejected, no permanent URL"]:::terminal
+        DA --> INS2["INSERT DIR_QUERY_ATTACHMENT with status"]:::system
+        PURL --> INS2
+        INS2 --> KF{"Enquiry mail-flagged AND an attachment approved?"}:::decision
+        KF -- Yes --> KAFKA["Publish Kafka LMS_LEADS_ENRICHMENT"]:::external
+        KF -- No --> NOOP["Ack, no enrichment"]:::terminal
+    end
+
+    subgraph FC ["Flow C: transfer to Buy-Leads"]
+        direction TB
+        BOT["FENQ bot resolves a purchased Business Lead"]:::external --> RD["Read all dir_query_attachment rows for the enquiry<br/>(no status filter)"]:::system
+        RD --> XF["POST to Buy-Leads saveblattach API"]:::external
+    end
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where an attachment is saved, moderated and forwarded</h3></span>
+        </header>
+        <div class="explain">
+<p>One table, two writers, one forwarder:</p>
+          <ul>
+            <li><strong>1.0 Direct save</strong> validates and multi-row-inserts <code>D1</code>
+              (no status, no queue).</li>
+            <li><strong>2.0 Moderation consumer</strong> inserts <code>D1</code> with a status,
+              calls the moderation and permanent-URL services, reads <code>D2</code>, and
+              conditionally publishes Kafka enrichment.</li>
+            <li><strong>3.0 Lead transfer</strong> reads <code>D1</code> unfiltered and POSTs it
+              to the external Buy-Leads API.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    APP["Buyer app"]:::ext
+    PUB["Unknown publisher"]:::ext
+    REVIEW["Image review + permanent-URL services"]:::ext
+    BL["Buy-Leads saveblattach API"]:::ext
+
+    P1(("1.0<br/>Direct save")):::proc
+    P2(("2.0<br/>Moderation consumer")):::proc
+    P3(("3.0<br/>Lead transfer")):::proc
+
+    D1[("D1 DIR_QUERY_ATTACHMENT")]:::store
+    D2[("D2 dir_query (mail-send flag)")]:::store
+    Q[["ENQUIRY_ATTACHMENT_WORKER queue + Kafka LMS_LEADS_ENRICHMENT"]]:::store
+
+    APP -->|"paths + Query ID"| P1
+    P1 -->|"multi-row INSERT (no status)"| D1
+    PUB -->|"queued message"| Q
+    Q --> P2
+    P2 -->|"moderate + permanent URL"| REVIEW
+    P2 -->|"INSERT with status"| D1
+    P2 -->|"read mail-send flag"| D2
+    P2 -.->|"if approved + mail-flagged"| Q
+    P3 -->|"read all rows, unfiltered"| D1
+    P3 -->|"forward"| BL
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + B</span><h3>A direct attachment save, and the separate moderation pipeline</h3></span>
+        </header>
+        <div class="explain">
+<p>A direct save and the separate moderation pipeline:</p>
+          <ol>
+            <li>The buyer's app posts image / document paths with the Query ID; the API checks
+              the Query ID, ModID, that at least one attachment is present, and that each has a
+              type id.</li>
+            <li><strong>alt</strong> &mdash; valid: one multi-row insert writes the rows and
+              returns success; invalid: rejected (as HTTP 200 with an error body).</li>
+            <li>Separately, a queued message reaches the moderation consumer, which re-inserts
+              with a status.</li>
+            <li><strong>alt</strong> &mdash; first image approved: a permanent URL is fetched
+              and, if the enquiry is mail-flagged, Kafka enrichment is published; rejected: no
+              URL, no enrichment.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor APP as Buyer app
+    participant API as write-API<br/>EnquiryAttachment
+    participant DB as DIR_QUERY_ATTACHMENT
+    participant Q as attachment queue
+    participant MOD as moderation consumer
+    participant REV as review + URL services
+
+    APP->>API: POST /enquiry/enquiryAttachment {query_id, image_orig[], doc_path[], attach_type_id}
+    API->>API: Query ID numeric + ModID + at least one attachment + type ids
+    alt valid
+        API->>DB: single multi-row INSERT (no status, no queue)
+        API-->>APP: Attachment saved successfully
+    else invalid
+        API-->>APP: rejected (HTTP 200 + error body)
+    end
+
+    Note over Q,REV: separate pipeline - publisher not found in the repos
+    Q->>MOD: queued attachment message
+    MOD->>REV: moderate first original image (verdict applied to all)
+    alt image approved
+        MOD->>REV: fetch permanent storage URL
+        MOD->>DB: INSERT with status, then publish Kafka enrichment if mail-flagged
+    else image rejected
+        MOD->>DB: INSERT with rejected status, no URL, no enrichment
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Enquiry Attachment KT</code> business &amp; technical docs. Two
+        independent, non-identical INSERT paths write the same table &mdash; the write API sets
+        no status column and runs no moderation, so an attachment it inserts can be forwarded to
+        Buy-Leads without ever being screened. The queue's publisher was not found in either
+        repo, only images are moderated (not documents), and <code>fetchISQ()</code> is a
+        parked stub &mdash; all flagged in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="paperclip"></i> The record</h3>
+        <dl>
+          <dt>Enquiry attachment</dt>
+          <dd>An image or document a buyer attaches to an enquiry, always linked to its Query ID &mdash; there is no standalone attachment.</dd>
+          <dt><code>DIR_QUERY_ATTACHMENT</code></dt>
+          <dd>The single table both write paths insert into. Images are stored in up to four size variants (original / small / medium / large) with width and height columns.</dd>
+          <dt><code>attach_type_id</code></dt>
+          <dd>A numeric category code required on every image and document. Its meaning is not defined anywhere in code.</dd>
+          <dt>Two write paths</dt>
+          <dd>Path A (the synchronous write API) trusts the client's paths and stores no status; path B (a queue consumer) stores a moderation status but only original-size images.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="shield-check"></i> Moderation</h3>
+        <dl>
+          <dt>Image review</dt>
+          <dd>A &ldquo;Leap Buyer Photos Review&rdquo; API screens images. A response of &ldquo;approve&rdquo; sets status 1; anything else (including errors) sets status 2 (rejected).</dd>
+          <dt>First-image-only</dt>
+          <dd>Only the first original image in a message is sent for review; its verdict is applied to every image in that message.</dd>
+          <dt>Documents auto-approved</dt>
+          <dd>Documents are never screened &mdash; they always get the approved status.</dd>
+          <dt>Permanent URL</dt>
+          <dd>For an approved image, a permanent-storage service is called to replace the temporary path with a stable URL.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="share-2"></i> Downstream</h3>
+        <dl>
+          <dt><code>DIR_QUERY_MAIL_SEND</code></dt>
+          <dd>A per-enquiry flag; only if it is set (non-null, non-zero) and an attachment is approved does the consumer publish enrichment.</dd>
+          <dt>Kafka <code>LMS_LEADS_ENRICHMENT</code></dt>
+          <dd>The topic the moderation consumer publishes approved-attachment enrichment to &mdash; a different topic from the <code>ENQ_PNS_DATA</code> used by Save Enquiry / Call Enquiry.</dd>
+          <dt>Buy-Leads transfer</dt>
+          <dd>When the FENQ bot turns a waiting enquiry into a purchased Business Lead, it re-reads all stored attachments (no status filter) and POSTs them to the Buy-Leads <code>saveblattach</code> API.</dd>
+          <dt>Query ID</dt>
+          <dd>The enquiry identifier every attachment row links back to, produced by Save Enquiry.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>

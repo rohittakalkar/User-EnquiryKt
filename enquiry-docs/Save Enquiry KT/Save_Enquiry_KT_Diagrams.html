@@ -1,0 +1,661 @@
+<meta charset="utf-8" />
+<title>Save Enquiry &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Save Enquiry feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Save Enquiry</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="inbox"></i> Save Enquiry</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; happy path + fan-out</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Save Enquiry</h1>
+    <p class="lede">Save Enquiry is the one write endpoint that permanently creates every buyer
+      enquiry, from any channel &mdash; web, app, WhatsApp, catalogue page, third-party. It
+      validates and cleans the input, screens the requirement text for banned / spam keywords
+      (skipped for auto-generated &ldquo;templated&rdquo; text), writes through a stored
+      procedure that also decides a <em>QueryDestination</em> (visible now, hold, or reject),
+      and then fires one bundled message that fans out to Lead Management, Personalization and
+      the WhatsApp / preferred-channel pipeline. A backup file plus a daily replay cron makes
+      sure nothing is lost if the save or the fan-out fails.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="inbox"></i> Lead Capture</p>
+      <h2>Save Enquiry</h2>
+      <p><code>GET/POST /enquiry/saveEnquiry</code>. Struct validation applies
+      <code>truncate</code> / <code>numeric</code> tags and UTF-8 cleaning; a missing or
+      invalid sender / receiver id short-circuits with <code>queryid = -2</code> and no DB
+      call. Three parallel lookups (receiver, sender, product) precede
+      <code>CheckBannedKeyword</code> (external BAN API, skipped for templated text); a hit
+      forces <code>InForceDestination = 2</code>, <code>WaitingreasonId = -999</code>. The core
+      write is <code>select sp_insert_iil_enquiry_v32(&hellip;)</code> (~70 params, 2-second
+      timeout); on failure a backup JSON is written. Success publishes one
+      <code>ENQ_DATA</code> RabbitMQ message; the controller remaps destination 8 / 9 &rarr; 3
+      and code 430 &rarr; HTTP 200.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>The single choke-point for every enquiry</h3></span>
+        </header>
+        <div class="explain">
+<p>One endpoint, several branches:</p>
+          <ul>
+            <li><strong>Flow A &mdash; happy path</strong>: validate, look up sender / receiver
+              (and product, if only a reference id was sent), screen the text, write, and notify
+              Lead Management, Personalization and the preferred-channel worker in the
+              background.</li>
+            <li><strong>Flow B &mdash; banned keyword</strong>: a spam / abuse match still saves
+              the enquiry, but routes it to a non-visible <em>waiting</em> state
+              (destination 2, reason -999).</li>
+            <li><strong>Flow C &mdash; templated text</strong>: an auto-filled generic
+              requirement skips the BAN API entirely.</li>
+            <li><strong>Flow D &mdash; product auto-fill</strong>: a catalogue enquiry with only
+              a product reference id has the product name fetched and attached.</li>
+            <li><strong>Flow E &mdash; guardrail</strong>: a missing sender / receiver id is
+              rejected before any DB round-trip (<code>queryid = -2</code>, returned as HTTP
+              200).</li>
+            <li><strong>Flow F &mdash; recovery</strong>: if the save or the fan-out fails, the
+              whole request is written to a backup file and a daily cron replays it.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Buyer sends an enquiry<br/>(web / app / WhatsApp / catalogue)"]:::actor --> V{"Sender + Receiver id present and valid?"}:::decision
+    V -- No --> RJ["Reject early: queryid = -2, destination = 3<br/>(returned as HTTP 200, no DB call)"]:::terminal
+    V -- Yes --> EN["Clean input + 3 parallel lookups<br/>(receiver, sender, product name if only a ref id)"]:::system
+    EN --> TP{"Requirement text templated or empty?"}:::decision
+    TP -- Yes --> SP["Skip spam screening"]:::system
+    TP -- No --> BAN{"BAN API: banned / spam keyword?"}:::decision
+    BAN -- Yes --> HOLD["Force destination = 2 (waiting), reason = -999"]:::system
+    BAN -- No --> SP
+    HOLD --> WR["sp_insert_iil_enquiry_v32 &rarr; queryid + QueryDestination"]:::system
+    SP --> WR
+    WR --> WE{"SP call ok?"}:::decision
+    WE -- No --> BK["Write backup JSON &rarr; daily cron replays it"]:::terminal
+    WE -- Yes --> PUB["Publish one ENQ_DATA message"]:::system
+    PUB --> FO["Consumer fans out:<br/>Lead Management + Personalization + preferred-channel (WhatsApp)"]:::external
+    PUB --> RESP["Response: destination 8 / 9 shown as 3"]:::terminal
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where an enquiry is created and fanned out</h3></span>
+        </header>
+        <div class="explain">
+<p>A lean write, a wide fan-out:</p>
+          <ul>
+            <li><strong>1.0 Validate &amp; enrich</strong> cleans input and runs three parallel
+              reads against <code>D1</code>.</li>
+            <li><strong>2.0 Screen</strong> calls the external BAN API unless the text is
+              templated.</li>
+            <li><strong>3.0 SP write</strong> calls <code>sp_insert_iil_enquiry_v32</code> and
+              gets back a <em>QueryDestination</em>.</li>
+            <li><strong>4.0 Fan-out publish</strong> sends one bundled <code>ENQ_DATA</code>
+              message; a downstream consumer splits it to FENQ, LMS and Personalization queues,
+              which reach <code>D2</code>&ndash;<code>D3</code>, a Kafka topic and a Redis
+              queue.</li>
+            <li><strong>5.0 Backup</strong> writes a JSON file on failure; the replay cron POSTs
+              it back to this endpoint.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    CL["Buyer / channel clients"]:::ext
+    BANAPI["BAN API (content moderation)"]:::ext
+    LMSX["Lead Mgmt + Personalization + preferred-channel"]:::ext
+
+    P1(("1.0<br/>Validate &amp; enrich")):::proc
+    P2(("2.0<br/>Screen text")):::proc
+    P3(("3.0<br/>SP write")):::proc
+    P4(("4.0<br/>Fan-out publish")):::proc
+    P5(("5.0<br/>Backup &amp; replay")):::proc
+
+    D1[("D1 sender / receiver / product<br/>read-Postgres")]:::store
+    D2[("D2 DIR_QUERY_WAITING / _BOUNCED<br/>(FENQ consumer)")]:::store
+    D3[("D3 Redis resque personalization queue")]:::store
+    Q[["ENQ_DATA to FENQ + LMS shards + Personalization + Kafka ENQ_PNS_DATA"]]:::store
+    BF[("backup JSON files")]:::store
+
+    CL -->|"enquiry"| P1
+    P1 -->|"3 parallel reads"| D1
+    P1 --> P2
+    P2 -->|"unless templated"| BANAPI
+    P2 --> P3
+    P3 -->|"sp_insert_iil_enquiry_v32"| D1
+    P3 --> P4
+    P4 -->|"publish"| Q
+    Q --> LMSX
+    Q -.-> D2
+    Q -.-> D3
+    P3 -.->|"on failure"| P5
+    P4 -.->|"on failure / panic"| P5
+    P5 --> BF
+    BF -.->|"daily cron re-POST"| P1
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + B</span><h3>A normal save, with the banned-keyword branch and downstream fan-out</h3></span>
+        </header>
+        <div class="explain">
+<p>A normal save with the spam branch shown:</p>
+          <ol>
+            <li>A client posts the enquiry; the API validates and resolves sender / receiver ids
+              (missing &rarr; <code>queryid = -2</code>, no DB call).</li>
+            <li>Three parallel lookups enrich the payload.</li>
+            <li><strong>alt</strong> &mdash; text present and not templated: the BAN API is
+              called; a hit sets destination 2 / reason -999. Templated or empty: screening is
+              skipped.</li>
+            <li>The stored procedure writes the enquiry and returns a destination; one
+              <code>ENQ_DATA</code> message is published and the consumer fans it out to Lead
+              Management, Personalization and the preferred-channel worker.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor CL as Channel client
+    participant API as write-API<br/>SaveEnquiry
+    participant DB as read-Postgres + SP
+    participant BAN as BAN API
+    participant MQ as RabbitMQ ENQ_DATA
+    participant CN as preferred-channel consumer
+
+    CL->>API: POST /enquiry/saveEnquiry {sender, receiver, description, ...}
+    API->>API: validate + resolve sender / receiver ids
+    alt sender or receiver missing
+        API-->>CL: queryid = -2, destination = 3 (HTTP 200, no DB call)
+    else ids ok
+        API->>DB: 3 parallel lookups (receiver, sender, product)
+    end
+    alt text present and not templated
+        API->>BAN: screen requirement text
+        BAN-->>API: banned -> destination 2, reason -999
+    else templated or empty
+        API->>API: skip screening
+    end
+    API->>DB: sp_insert_iil_enquiry_v32 (~70 params, 2s)
+    API->>MQ: publish one ENQ_DATA message
+    API-->>CL: queryid + destination (8 / 9 shown as 3)
+    MQ->>CN: deliver
+    CN->>CN: fan out to Lead Mgmt + Personalization + preferred-channel
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Save Enquiry KT</code> business &amp; technical docs. The insert
+        target lives inside <code>sp_insert_iil_enquiry_v32</code> and is not visible from Go;
+        <code>QueryDestination</code> codes 2 / 5 / 8 / 9 are only partly explained in code;
+        HTTP 430 is silently returned as 200; and the legacy per-queue push functions are dead
+        code superseded by the single bundled <code>ENQ_DATA</code> publish &mdash; all flagged
+        in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="inbox"></i> The write</h3>
+        <dl>
+          <dt>Enquiry</dt>
+          <dd>A buyer's expression of interest in a supplier's product or service &mdash; IndiaMART's core lead unit.</dd>
+          <dt><code>sp_insert_iil_enquiry_v32</code></dt>
+          <dd>The stored procedure that actually creates the enquiry (~70 parameters). The tables it writes live inside the SP, not in the API code.</dd>
+          <dt>QueryDestination</dt>
+          <dd>A classification returned by the SP: <code>1</code> = visible to the supplier now, <code>2</code> = held / waiting, <code>3</code> = processed / the generic external value, <code>5</code> collapses to 3, <code>8</code> (export-mark) and <code>9</code> (high-risk supplier) are shown to callers as 3.</dd>
+          <dt>Early guardrail</dt>
+          <dd>A missing or invalid sender / receiver id is rejected before any DB round-trip, returning <code>queryid = -2</code> as HTTP 200.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="shield-alert"></i> Screening</h3>
+        <dl>
+          <dt>BAN API</dt>
+          <dd>An external content-moderation service that screens the requirement text for spam / abusive keywords.</dd>
+          <dt>Templated description</dt>
+          <dd>An auto-filled generic requirement (e.g. &ldquo;I am interested in&hellip;&rdquo;). Matched against 14 fixed patterns; such text skips the BAN API entirely.</dd>
+          <dt>Waiting state</dt>
+          <dd>A banned-keyword hit forces <code>InForceDestination = 2</code> and reason <code>-999</code>; the enquiry is still saved but not shown to the supplier until resolved.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="git-fork"></i> Fan-out &amp; recovery</h3>
+        <dl>
+          <dt><code>ENQ_DATA</code></dt>
+          <dd>One bundled RabbitMQ message published per saved enquiry; a downstream consumer splits it into FENQ, Lead-Management and Personalization sub-messages.</dd>
+          <dt>Lead Management (LMS)</dt>
+          <dd>The system that tracks each enquiry as a lead; fed via a 5-way sharded queue and mirrored to Kafka topic <code>ENQ_PNS_DATA</code>.</dd>
+          <dt>Personalization</dt>
+          <dd>The recommendation engine; its sub-message ends up on a Redis resque-style work queue.</dd>
+          <dt>Preferred-channel worker</dt>
+          <dd>Decides how the enquiry reaches the supplier &mdash; email, WhatsApp or app.</dd>
+          <dt>Backup &amp; replay</dt>
+          <dd>On a save or fan-out failure the full request is written to a JSON file; the <code>QueryParse</code> cron re-POSTs it to this endpoint the next day.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for a buyer or supplier.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>
