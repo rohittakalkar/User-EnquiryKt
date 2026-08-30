@@ -1,0 +1,670 @@
+<meta charset="utf-8" />
+<title>Call Enquiry &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Call Enquiry feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Call Enquiry</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="phone-call"></i> Call Enquiry</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; identified + PNS link</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Call Enquiry</h1>
+    <p class="lede">Buyers often phone a supplier instead of sending text. Call Enquiry is four
+      endpoints that record those calls the way Save Enquiry records text leads:
+      <strong>callEnquiry</strong> for identified calls, <strong>callEnquiryUnidentified</strong>
+      for anonymous ones (later claimed / linked), <strong>unidentifiedC2C</strong> to look up
+      unclaimed calls, and <strong>linkC2CPNS</strong> to tie a virtual-number (PNS) call to
+      IndiaMART's own record. A daily rate limit (50 unique suppliers) curbs spam calling, and
+      identified / PNS-linked calls are pushed to Lead Management.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="phone-call"></i> Call-Based Leads</p>
+      <h2>Call Enquiry</h2>
+      <p><code>GET/POST /enquiry/callEnquiry</code> requires caller GLID, receiver GLID
+      and a ModID (never <code>MY</code>), caller &ne; receiver. A <em>bsmapping</em> lookup
+      returns <code>connect_type</code>: <code>2</code> is a hard match; otherwise a
+      count of distinct receivers called today <code>&ge; 50</code> returns HTTP 429.
+      <code>InsertInto</code> <code>PI</code> inserts <code>C2C_RECORDS</code>, <code>PU</code>
+      updates. <code>callEnquiryUnidentified</code> writes
+      <code>C2C_RECORDS_UNIDENTIFIED</code>; a <code>PU</code> with a probable number attaches
+      it, otherwise it attaches the real caller and chains into <code>CallEnquiryModel</code>.
+      <code>unidentifiedC2C</code> is a read (by GA cookie, or last-5-minute unclaimed calls
+      for a receiver). <code>linkC2CPNS</code> (behind <code>middleware.Validation</code>)
+      links via <code>iil_call_mapping</code> on a 5-minute window, state
+      <code>pre</code> / <code>post</code>.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>Call interactions, tracked like enquiries</h3></span>
+        </header>
+        <div class="explain">
+<p>Four call-tracking endpoints:</p>
+          <ul>
+            <li><strong>Identified call</strong> &mdash; caller, receiver and ModID are known;
+              the call is rate-checked (block after 50 unique suppliers in a day) and recorded.
+              For Message-Center / Lead-Manager screens the system also auto-detects whether the
+              call relates to an existing enquiry (<code>W</code>) or a purchased lead
+              (<code>B</code>), whichever is more recent.</li>
+            <li><strong>Unidentified call</strong> &mdash; the buyer's account is unknown at call
+              time; the call is saved anonymously and later claimed. An app-type claim also
+              creates the real identified record; a PNS-type claim only attaches a probable
+              number.</li>
+            <li><strong>Unidentified lookup</strong> &mdash; a read that finds unclaimed recent
+              calls by browser cookie or by supplier.</li>
+            <li><strong>PNS link</strong> &mdash; ties a masked virtual-number call to
+              IndiaMART's own call record within a 5-minute window, for the active
+              (<code>pre</code>) and completed (<code>post</code>) call stages.</li>
+          </ul>
+          <p>Identified and PNS-linked calls notify Lead Management; purely unidentified calls
+          stay silent until claimed.</p>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Buyer calls a supplier"]:::actor --> WH{"Which endpoint?"}:::decision
+    WH -- "callEnquiry (identified)" --> V{"caller + receiver + ModID ok?<br/>caller != receiver? ModID != MY?"}:::decision
+    V -- No --> RJ["Reject"]:::terminal
+    V -- Yes --> BS["bsmapping: hard match?"]:::external
+    BS -- "hard match" --> REC["Record call (insert or update C2C_RECORDS)"]:::system
+    BS -- "not hard match" --> RL{"50+ unique suppliers called today?"}:::decision
+    RL -- Yes --> BLK["Block: attempts exhausted (HTTP 429)"]:::terminal
+    RL -- No --> REC
+    REC --> CTX{"Message-Center / Lead-Manager screen?"}:::decision
+    CTX -- Yes --> TAG["Auto-tag context: W (enquiry) or B (business lead), whichever is more recent"]:::system
+    CTX -- No --> SKIP["No context tag"]:::system
+    TAG --> LMS["Notify Lead Management"]:::external
+    SKIP --> LMS
+
+    WH -- "callEnquiryUnidentified (anonymous)" --> UN["Save anonymous C2C_RECORDS_UNIDENTIFIED"]:::system
+    UN --> CLAIM{"Claim type?"}:::decision
+    CLAIM -- "app-type" --> APPC["Attach real caller + create identified record + link"]:::system
+    CLAIM -- "PNS-type" --> PNC["Attach probable number / GLID only"]:::terminal
+
+    WH -- "unidentifiedC2C (lookup)" --> LK["Read-only: unclaimed calls by GA cookie, or last 5 min for a supplier"]:::terminal
+    WH -- "linkC2CPNS (virtual number)" --> PL["state pre / post; look back 5 min for a matching C2C record; link via iil_call_mapping"]:::system
+    PL --> LMS
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where a call is recorded, identified and linked</h3></span>
+        </header>
+        <div class="explain">
+<p>Three call tables plus a mapping table:</p>
+          <ul>
+            <li><strong>1.0 Identified call</strong> rate-checks via the external bsmapping
+              service, then inserts / updates <code>D1</code> and <code>D3</code>, and reads
+              <code>D4</code> / <code>D5</code> for context.</li>
+            <li><strong>2.0 Unidentified call</strong> inserts / updates <code>D2</code>; an
+              app-type claim chains into 1.0.</li>
+            <li><strong>3.0 Unidentified lookup</strong> reads <code>D2</code> only.</li>
+            <li><strong>4.0 PNS link</strong> reads <code>D1</code> on a 5-minute window and
+              writes <code>D3</code>.</li>
+            <li>1.0 and 4.0 push the shared Lead-Management queue, mirrored to Kafka.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    CL["Buyer / channel clients"]:::ext
+    BSMAP["bsmapping service"]:::ext
+    LMSX["Lead Management (+ Kafka ENQ_PNS_DATA)"]:::ext
+
+    P1(("1.0<br/>Identified call")):::proc
+    P2(("2.0<br/>Unidentified call")):::proc
+    P3(("3.0<br/>Unidentified lookup")):::proc
+    P4(("4.0<br/>PNS link")):::proc
+
+    D1[("D1 C2C_RECORDS")]:::store
+    D2[("D2 C2C_RECORDS_UNIDENTIFIED")]:::store
+    D3[("D3 iil_call_mapping")]:::store
+    D4[("D4 dir_query_&lt;NN&gt; (context)")]:::store
+    D5[("D5 eto_lead_pur_hist (context)")]:::store
+    Q[["R_MESSAGE_CENTER_BIZFEED_LMS shards"]]:::store
+
+    CL -->|"identified call"| P1
+    P1 -->|"rate check"| BSMAP
+    P1 -->|"insert / update"| D1
+    P1 -->|"cross-ref"| D3
+    P1 -.->|"context auto-detect"| D4
+    P1 -.->|"context auto-detect"| D5
+    CL -->|"anonymous call"| P2
+    P2 -->|"insert / update"| D2
+    P2 -.->|"app-type claim chains into"| P1
+    CL -->|"lookup"| P3
+    P3 -->|"read"| D2
+    CL -->|"PNS link"| P4
+    P4 -->|"5-min lookback"| D1
+    P4 -->|"link"| D3
+    P1 -->|"LMS push"| Q
+    P4 -->|"LMS push"| Q
+    Q --> LMSX
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + E</span><h3>Recording an identified call, and linking a PNS call</h3></span>
+        </header>
+        <div class="explain">
+<p>An identified call, then a PNS link:</p>
+          <ol>
+            <li>A client posts an identified call; the API checks caller / receiver / ModID and
+              asks the bsmapping service for a match type.</li>
+            <li><strong>alt</strong> &mdash; not a hard match and 50+ unique suppliers called
+              today: HTTP 429. Otherwise the call is inserted (or updated) and context is
+              auto-detected for Message-Center screens.</li>
+            <li>The call is pushed to Lead Management.</li>
+            <li>Later, a PNS call arrives with a <code>pre</code> or <code>post</code> state; the
+              API looks back 5 minutes for a matching C2C record and links them via the mapping
+              table, then pushes Lead Management.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor CL as Channel client
+    participant API as write-API<br/>CallEnquiry
+    participant BS as bsmapping service
+    participant DB as C2C tables
+    participant MQ as LMS shard queue
+    participant PN as linkC2CPNS API
+
+    CL->>API: POST /enquiry/callEnquiry {caller, receiver, ModID}
+    API->>API: caller != receiver, ModID != MY
+    API->>BS: match type for caller / receiver
+    alt not a hard match and 50+ unique suppliers today
+        API-->>CL: HTTP 429 attempts exhausted
+    else allowed
+        API->>DB: insert or update C2C_RECORDS (+ iil_call_mapping)
+        API->>DB: auto-detect context (W / B) for Message-Center screens
+        API->>MQ: LMS push (insertion_type 1)
+        API-->>CL: call record id
+    end
+
+    Note over CL,PN: later - a virtual-number (PNS) call
+    CL->>PN: POST /enquiry/linkC2CPNS {callerid, receiverid, state pre/post, timestamp}
+    PN->>DB: look back 5 minutes for a matching C2C record
+    PN->>DB: link via iil_call_mapping
+    PN->>MQ: LMS push (insertion_type 2 or 3)
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Call Enquiry KT</code> business &amp; technical docs.
+        <code>PI</code> / <code>PU</code>, hard / soft match, <code>W</code> / <code>B</code>
+        and the single-char type fields have no enum in code; <code>findCallType</code> is
+        duplicated byte-for-byte in two files; three of the four routes sit before
+        <code>middleware.Validation</code> while <code>linkC2CPNS</code> sits after it; and
+        <code>uniqueid</code> / <code>ConnectionTime</code> are shared package-level variables
+        with a data race &mdash; all flagged in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="phone-call"></i> The four endpoints</h3>
+        <dl>
+          <dt>callEnquiry</dt>
+          <dd>Records an <em>identified</em> call &mdash; the buyer's GLID is known at call time. Writes <code>C2C_RECORDS</code>.</dd>
+          <dt>callEnquiryUnidentified</dt>
+          <dd>Records an <em>anonymous</em> call (no GLID yet) into <code>C2C_RECORDS_UNIDENTIFIED</code>; later claimed to become identified or PNS-attached.</dd>
+          <dt>unidentifiedC2C</dt>
+          <dd>A read-only lookup (despite its POST route) for unclaimed recent calls &mdash; by browser GA cookie, or the last five minutes for a given supplier.</dd>
+          <dt>linkC2CPNS</dt>
+          <dd>Ties a masked virtual-number (PNS) call to IndiaMART's own C2C record. The only one of the four behind <code>middleware.Validation</code>.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="tags"></i> Classification</h3>
+        <dl>
+          <dt><code>PI</code> / <code>PU</code></dt>
+          <dd>&ldquo;Post Insert&rdquo; / &ldquo;Post Update&rdquo; &mdash; the flag that routes a request to the insert or the update path (also reused as a backup-file marker).</dd>
+          <dt>Hard vs soft match</dt>
+          <dd>The bsmapping service's <code>connect_type</code>: <code>2</code> = hard match (a known caller-receiver pair), anything else = soft match / no data, which triggers the rate-limit query.</dd>
+          <dt>Rate limit</dt>
+          <dd>If a caller has phoned 50 or more distinct suppliers today (and it is not a hard match), the next call is blocked with HTTP 429.</dd>
+          <dt><code>W</code> / <code>B</code> context</dt>
+          <dd>Auto-detected only for Message-Center / Lead-Manager screens on IMOB / ANDROID / IOS: <code>W</code> if the call relates to an existing enquiry, <code>B</code> if to a purchased business lead, whichever match is more recent.</dd>
+          <dt>pre / post state</dt>
+          <dd>PNS call stages &mdash; <code>pre</code> (active / ringing, uses the PNS Active id) and <code>post</code> (completed, uses the PNS id); they map to LMS insertion types 2 and 3.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="link"></i> Records &amp; downstream</h3>
+        <dl>
+          <dt><code>iil_call_mapping</code></dt>
+          <dd>The cross-reference table linking a C2C record (and PNS records) with entry / last-modified timestamps.</dd>
+          <dt>Probable number</dt>
+          <dd>For a PNS-type claim on an unidentified call, only a likely buyer number / GLID is attached &mdash; no full identified record is created.</dd>
+          <dt>5-minute window</dt>
+          <dd>PNS linking and the unidentified lookup both only consider C2C records from the last five minutes.</dd>
+          <dt>Lead Management push</dt>
+          <dd>Identified calls (<code>insertion_type</code> 1, transaction type C) and PNS links (2 / 3, type P) go to the same sharded LMS queue that Save Enquiry uses, and are mirrored to Kafka topic <code>ENQ_PNS_DATA</code>.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for a buyer or supplier.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>
