@@ -1,0 +1,639 @@
+<meta charset="utf-8" />
+<title>Enquiry Interest &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Enquiry Interest feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Enquiry Interest</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="radar"></i> Enquiry Interest</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; queue + warehouse</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Enquiry Interest</h1>
+    <p class="lede">Enquiry Interest is a lightweight signal-capture endpoint: when a buyer shows
+      interest in a supplier or product (a page view, a call-to-action click), a caller posts
+      the context here. The API only validates and cleans the input, then publishes it to a
+      RabbitMQ queue over an HTTP relay &mdash; it writes no database itself. A separate consumer
+      persists the signal to a warehouse Postgres table through a stored procedure. It is a
+      side pipeline, not part of the enquiry lifecycle, and is unrelated to the
+      &ldquo;intent&rdquo; field Save Enquiry's personalization uses.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="radar"></i> Behavioural Signals</p>
+      <h2>Enquiry Interest</h2>
+      <p><code>GET/POST /enquiry/enquiryInterest</code> (before
+      <code>middleware.Validation</code>; always binds a JSON body regardless of method). The
+      sender GLID must be present and numeric; <code>interest_query_ref_text == &quot;||&quot;</code>
+      is rejected as a fake request; lat / long containing letters or <code>=</code> is wiped;
+      several fields are silently truncated. It then calls the HTTP relay
+      <code>pubapi.Insert_rabbitmq</code> to publish to queue
+      <code>enquiry.post.intent</code> on exchange <code>ENQUIRY.topic</code>; one retry, then
+      a local file fallback. The <code>ENQUIRY_INTEREST</code> consumer defaults missing fields
+      to <code>&quot;null&quot;</code> and calls
+      <code>sp_insert_iil_enquiry_interest_v4</code> on the <code>imbldwhpg</code> warehouse
+      DB.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>A fire-and-forget interest signal</h3></span>
+        </header>
+        <div class="explain">
+<p>Capture, queue, persist &mdash; asynchronously:</p>
+          <ul>
+            <li><strong>Flow A &mdash; happy path</strong>: the caller posts the buyer id,
+              product / category context, URL and geo; the API validates the sender id, cleans
+              the payload, and publishes one queue message, then responds immediately. A
+              consumer later inserts the row into the warehouse.</li>
+            <li><strong>Flow B &mdash; validation failure</strong>: a missing or non-numeric
+              sender id, or the <code>&quot;||&quot;</code> fake-request marker, is rejected
+              before anything is queued.</li>
+            <li><strong>Flow C &mdash; queue outage</strong>: if the RabbitMQ publish fails
+              twice, the payload is written to a local fallback file and the caller still gets a
+              success-shaped response.</li>
+            <li><strong>Flow D &mdash; consumer</strong>: a message whose sender id resolves to
+              <code>&quot;null&quot;</code> is dropped; a duplicate is detected by the stored
+              procedure and acknowledged; a DB error drops the message with no retry.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Buyer shows interest (page view / CTA click)<br/>caller POST /enquiry/enquiryInterest"]:::actor --> V{"Sender GLID present and numeric?"}:::decision
+    V -- No --> RJ["Reject: Sender ID missing / invalid (not queued)"]:::terminal
+    V -- Yes --> FK{"interest_query_ref_text = '||' ?"}:::decision
+    FK -- Yes --> RJ2["Reject: Fake request (not queued)"]:::terminal
+    FK -- No --> CL["Clean: wipe non-numeric lat / long, default cat / mcat to 0, truncate URLs / text"]:::system
+    CL --> PUB["Publish to enquiry.post.intent (ENQUIRY.topic) via HTTP relay"]:::system
+    PUB --> PR{"Publish ok (after one retry)?"}:::decision
+    PR -- No --> BK["Write payload to local fallback file<br/>(caller still gets a success-shaped response)"]:::terminal
+    PR -- Yes --> RESP["Immediate response (Code / Status blanked out)"]:::terminal
+    PUB --> CON["ENQUIRY_INTEREST consumer"]:::external
+    CON --> CD{"Sender id resolves to 'null'?"}:::decision
+    CD -- Yes --> DROP["Ack, no insert"]:::terminal
+    CD -- No --> SP["sp_insert_iil_enquiry_interest_v4 on warehouse Postgres"]:::system
+    SP --> DUP{"Stored proc reports duplicate?"}:::decision
+    DUP -- Yes --> DL["Logged as duplicate, message acked"]:::terminal
+    DUP -- No --> INS["Interest row persisted"]:::terminal
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where an interest signal is captured and persisted</h3></span>
+        </header>
+        <div class="explain">
+<p>No synchronous DB &mdash; a queue and a warehouse:</p>
+          <ul>
+            <li><strong>1.0 Validate &amp; clean</strong> checks the sender id, screens the
+              fake-request marker, and sanitises geo / length.</li>
+            <li><strong>2.0 Publish</strong> sends the payload to
+              <code>enquiry.post.intent</code> via an HTTP relay; a failure writes a local file
+              <code>D2</code>.</li>
+            <li><strong>3.0 Warehouse consumer</strong> defaults missing fields, drops
+              null-sender or duplicate messages, and calls the stored procedure on
+              <code>D1</code>.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    CALLER["Frontend / upstream caller"]:::ext
+
+    P1(("1.0<br/>Validate &amp; clean")):::proc
+    P2(("2.0<br/>Publish (HTTP relay)")):::proc
+    P3(("3.0<br/>Warehouse consumer")):::proc
+
+    D1[("D1 IIL_ENQUIRY_INTEREST<br/>imbldwhpg warehouse")]:::store
+    D2[("D2 local fallback log files")]:::store
+    Q[["enquiry.post.intent on ENQUIRY.topic"]]:::store
+
+    CALLER -->|"interest context"| P1
+    P1 --> P2
+    P2 -->|"publish"| Q
+    P2 -.->|"on publish failure"| D2
+    Q --> P3
+    P3 -->|"sp_insert_iil_enquiry_interest_v4"| D1
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + C</span><h3>A signal queued, and the RabbitMQ-failure fallback</h3></span>
+        </header>
+        <div class="explain">
+<p>A queued signal and the outage fallback:</p>
+          <ol>
+            <li>A caller posts the interest context; the API validates the sender id and
+              screens for the fake-request marker.</li>
+            <li>It cleans geo and length, then publishes one message to
+              <code>enquiry.post.intent</code> and responds immediately.</li>
+            <li><strong>alt</strong> &mdash; publish succeeds: the consumer later inserts the
+              row into the warehouse via the stored procedure; publish fails twice: the payload
+              is written to a local fallback file and the caller still gets a success-shaped
+              response.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor CALLER as Frontend caller
+    participant API as write-API<br/>EnquiryInterest
+    participant MQ as RabbitMQ relay
+    participant FILE as local fallback file
+    participant CON as ENQUIRY_INTEREST consumer
+    participant WH as warehouse Postgres
+
+    CALLER->>API: POST /enquiry/enquiryInterest {interest_sender_glusr_id, product / category, url, geo}
+    API->>API: sender id present + numeric, screen '||' fake-request marker
+    API->>API: wipe bad lat / long, default cat / mcat, truncate fields
+    API->>MQ: publish to enquiry.post.intent (one retry)
+    alt publish ok
+        API-->>CALLER: immediate response (Code / Status blanked)
+    else publish fails twice
+        API->>FILE: write payload for later reprocessing
+        API-->>CALLER: success-shaped response
+    end
+    MQ->>CON: deliver (when published)
+    CON->>CON: default missing fields to "null"
+    alt sender id resolves to "null"
+        CON-->>MQ: ack, no insert
+    else sender id present
+        CON->>WH: sp_insert_iil_enquiry_interest_v4 (duplicate -> logged, still acked)
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Enquiry Interest KT</code> business &amp; technical docs. The API
+        writes no DB &mdash; it only publishes over an HTTP relay; a consumer DB error drops the
+        message with no retry or dead-letter queue; the warehouse table name is inferred from
+        the stored-procedure name; <code>mail1</code> / <code>mail2</code> params are always
+        <code>&quot;null&quot;</code> and <code>in_iil_fenq_status</code> is always <code>0</code>;
+        and this feature's &ldquo;intent&rdquo; is unrelated to Save Enquiry's personalization
+        &ldquo;intent&rdquo; field &mdash; all flagged in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="radar"></i> The signal</h3>
+        <dl>
+          <dt>Enquiry interest</dt>
+          <dd>A captured buyer interaction &mdash; a listing view, a call-to-action click &mdash; that is not itself an enquiry. Raw behavioural data for analytics / personalization / lead scoring.</dd>
+          <dt>Fire-and-forget</dt>
+          <dd>The API validates, cleans and publishes to a queue, then responds. The caller learns only whether the message was queued, never whether the DB insert succeeded.</dd>
+          <dt><code>interest_type</code> / <code>modreftype</code> / login mode</dt>
+          <dd>Opaque numeric classification codes owned by the calling team; no enum for them exists in either repo.</dd>
+          <dt>Not Save Enquiry's &ldquo;intent&rdquo;</dt>
+          <dd>Save Enquiry's personalization inspects an <code>intent</code> field for <code>leap@indiamart.com</code>; that is a different concept that merely shares the English word.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="filter"></i> Validation</h3>
+        <dl>
+          <dt>Mandatory sender id</dt>
+          <dd><code>interest_sender_glusr_id</code> must be present and numeric, or the request is rejected before anything is queued.</dd>
+          <dt><code>&quot;||&quot;</code> fake-request</dt>
+          <dd>A ref-text of exactly <code>||</code> is treated as bot / garbage and rejected.</dd>
+          <dt>Geo sanitation</dt>
+          <dd>If either latitude or longitude contains a letter or <code>=</code>, both are wiped rather than storing garbage coordinates.</dd>
+          <dt>Silent truncation</dt>
+          <dd>ModID to 8 chars, URLs to 500, ref-text to 250, product name to 200 &mdash; over-length values are cut, not rejected.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="database"></i> Transport &amp; storage</h3>
+        <dl>
+          <dt><code>enquiry.post.intent</code></dt>
+          <dd>The RabbitMQ queue (exchange <code>ENQUIRY.topic</code>) the signal is published to, via an HTTP publish relay rather than a native AMQP client.</dd>
+          <dt>File fallback</dt>
+          <dd>If the publish fails after one retry, the payload is written to a local log file for later (manual / TD-agent) reprocessing; no replay cron was found.</dd>
+          <dt><code>ENQUIRY_INTEREST</code> consumer</dt>
+          <dd>Persists the signal to the warehouse via <code>sp_insert_iil_enquiry_interest_v4</code>; defaults missing fields to <code>&quot;null&quot;</code>, drops null-sender messages, and treats a stored-proc duplicate as a successful no-op.</dd>
+          <dt>No retry on DB error</dt>
+          <dd>A consumer-side DB failure nacks the message without requeue and with no visible dead-letter queue &mdash; the signal is lost.</dd>
+          <dt><code>imbldwhpg</code></dt>
+          <dd>The warehouse Postgres database the interest rows land in.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>
