@@ -1,6 +1,6 @@
 <meta charset="utf-8" />
-<title>GST &mdash; KT Diagrams</title>
-<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API GST feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<title>PNS Setting &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API PNS Setting feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
@@ -330,14 +330,14 @@
 <div class="shell">
   <aside class="rail">
     <p class="mark">IndiaMART &middot; Users-API KT</p>
-    <p class="mark-title">GST</p>
+    <p class="mark-title">PNS Setting</p>
     <nav>
       <ul>
         <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
-        <li><a href="#feature"><i data-lucide="shield-check"></i> GST</a></li>
+        <li><a href="#feature"><i data-lucide="phone-forwarded"></i> PNS Setting</a></li>
         <li><a href="#d-biz" class="sub">Business flowchart</a></li>
         <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
-        <li><a href="#d-seq" class="sub">Sequence &mdash; submit &amp; verify</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; save a preference</a></li>
         <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
       </ul>
     </nav>
@@ -346,11 +346,15 @@
   <main>
     <p class="topbar">Knowledge Transfer &middot; Engineering</p>
 
-    <h1>GST &mdash; Goods &amp; Services Tax</h1>
-    <p class="lede">When a supplier submits or edits a GST number, a full verification process runs behind
-      one text field: format &amp; checksum checks, a lock on already-verified GSTs, an external
-      Government / BI verification call, automatic PAN and legal-status derivation, a nightly
-      re-verification cron, and a separate GST&nbsp;&harr;&nbsp;HSN tax-classification mapping flow.</p>
+    <h1>PNS Setting</h1>
+    <p class="lede">PNS Setting stores a supplier's off-hours call-routing preferences &mdash; which of
+      their mobiles, landlines or additional-contact numbers should still receive calls outside
+      business hours (<code>IIL_PNS_SETTING</code>). One <code>POST /pnssetting</code> endpoint
+      inserts, updates or deletes a mapping per number-type. The contact number is always
+      re-derived server-side from the profile, never trusted from the request. A separate
+      consumer auto-re-syncs these preferences whenever the supplier changes a phone number in
+      the general profile-edit flow, and that path &mdash; unlike the direct API &mdash; enforces
+      a five-mapping cap.</p>
 
     <section class="legend" id="legend">
       <h2>How to read these diagrams</h2>
@@ -387,27 +391,40 @@
     </section>
 
     <section class="feature" id="feature">
-      <p class="kicker"><i data-lucide="shield-check"></i> Trust &amp; Compliance</p>
-      <h2>GST &mdash; Goods &amp; Services Tax</h2>
-      <p>GST is a <code>Type=CompRgst</code> branch of the shared user-details write endpoint.
-      The five business flows (A&ndash;E) are: first submit, locked-GST reject, daily TACT re-verify
-      cron, GST&nbsp;&harr;&nbsp;HSN mapping, and legal-status auto-computation.</p>
+      <p class="kicker"><i data-lucide="phone-forwarded"></i> Telephony &amp; Privacy</p>
+      <h2>PNS Setting</h2>
+      <p><code>POST /pnssetting</code> serviceName <code>PNS_SETTING_SERVICE</code>
+      (gateways GLADMIN / MAPI / BUYERMY / SELLERMY / ANDROID / IOS). Types <code>M1</code> /
+      <code>M2</code> / <code>L1</code> / <code>L2</code> are general (no contact id);
+      <code>M</code> / <code>L</code> / <code>T</code> are additional-contact and need a contact
+      id; <code>D</code> is a sentinel (<code>action_flag=&quot;d&quot;</code>) that deletes all
+      rows for a (supplier, contact) pair. <code>offhrs_flag</code> is 1 / 2 / 3 for
+      insert / update and 0 for delete; reads treat 2 / 3 as &ldquo;off-hours active&rdquo;.</p>
 
       <article class="card">
         <header id="d-biz">
           <span class="ico"><i data-lucide="git-branch"></i></span>
-          <span><span class="dtype">Business flowchart</span><h3>What happens when a GST is submitted</h3></span>
+          <span><span class="dtype">Business flowchart</span><h3>Which numbers ring after business hours</h3></span>
         </header>
         <div class="explain">
-<p>Read top-down. The main path is a supplier edit; two self-contained
-          sub-flows hang off it with dotted links:</p>
-          <ol>
-            <li><strong>Format gate</strong> &mdash; 15 characters and a valid GSTIN checksum, else rejected.</li>
-            <li><strong>Lock gate</strong> &mdash; a <em>Tactical</em> or <em>OTP verified</em> GST is blocked for a normal supplier; only a permissioned GLADMIN or fresh OTP re-proof passes.</li>
-            <li><strong>Save &amp; verify</strong> &mdash; record saved, PAN auto-extracted, background check against the Government GST database.</li>
-            <li><strong>Outcome</strong> &mdash; pass &rArr; Tactical Verified + legal status + success email; needs-review &rArr; manual queue; fail &rArr; rejected.</li>
-            <li><strong>Nightly cron</strong> re-checks recently-changed and rejected GSTs silently. <strong>HSN mapping</strong> is admin-only.</li>
-          </ol>
+<p>One endpoint, several type families:</p>
+          <ul>
+            <li>The GSM must already exist for the supplier, or the request fails with
+              &ldquo;GSM Number does not exist&rdquo;. The contact number is <em>always</em>
+              re-derived from <code>GLUSR_USR</code> / <code>GLUSR_USR_ADDT_CONTACT</code>; a
+              non-numeric result becomes &ldquo;INVALID&rdquo;.</li>
+            <li><strong>General types (<code>M1</code>/<code>M2</code>/<code>L1</code>/<code>L2</code>)</strong>
+              carry no contact id; <strong>additional-contact types
+              (<code>M</code>/<code>L</code>/<code>T</code>)</strong> require one.</li>
+            <li>A number can only map to one type. If the same number arrives under a second
+              type, <code>HandleDuplicatePnsUpdate</code> keeps the row with the higher (or
+              equal) <code>offhrs_flag</code> and silently deletes the other.</li>
+            <li>Insert is <code>ON CONFLICT DO NOTHING</code> plus an explicit
+              &ldquo;is this mapping already there?&rdquo; pre-check.</li>
+            <li>The <strong>max-five-mappings</strong> cap is disabled in this write API but
+              enforced in the auto-sync consumer (Flow C).</li>
+            <li>Only <strong>delete</strong> writes an audit trail; insert / update do not.</li>
+          </ul>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
@@ -418,39 +435,26 @@ flowchart TD
     classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
     classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
 
-    A["Supplier submits / edits GST<br/>seller panel or app"]:::actor
-    B{"Valid format?<br/>15 chars + checksum"}:::decision
-    A --> B
-    B -- No --> R1["Reject: invalid GST"]:::terminal
-    B -- Yes --> C{"Existing GST already<br/>Tactical / OTP verified?"}:::decision
-    C -- "Yes, normal supplier" --> R2["Reject: GST locked<br/>fraud-prevention"]:::terminal
-    C -- "Yes, GLADMIN w/ permission<br/>or OTP re-proof" --> D
-    C -- No --> D["Save GST record<br/>auto-extract PAN"]:::system
-    D --> E["Background: verify against<br/>Govt GST database"]:::external
-    E --> F{"Verification outcome"}:::decision
-    F -- Pass --> G["GST = Tactical Verified<br/>trust status updated"]:::system
-    F -- Needs review --> H["Manual verification queue"]:::system
-    F -- Fail --> I["GST Rejected<br/>supplier can resubmit"]:::terminal
-    G --> J["Auto-derive Legal Status<br/>from GSTIN"]:::system
-    G --> K["Email: GST updated successfully"]:::system
-    I --> K2["Email: GST rejection notice"]:::system
-    G -.->|"later, nightly re-check"| L
-    I -.->|"rejected GSTs re-checked too"| L
-    G -.->|"separate admin flow"| Q
+    A["Supplier app / admin<br/>POST /pnssetting"]:::actor --> G{"Gateway allowed?<br/>+ GSM exists for supplier?"}:::decision
+    G -- No --> RJ["Reject (e.g. GSM Number does not exist)"]:::terminal
+    G -- Yes --> D["Re-derive contact number from profile<br/>(non-numeric &rarr; INVALID)"]:::system
+    D --> TY{"Type family"}:::decision
+    TY -- "M1 / M2 / L1 / L2 (general)" --> OP{"offhrs_flag"}:::decision
+    TY -- "M / L / T (needs contact id)" --> OP
+    TY -- "D sentinel (action_flag d)" --> DEL["deleteById: remove ALL rows<br/>for (supplier, contact)"]:::system
+    OP -- "1 / 2 / 3 insert or update" --> INS["Pre-check + INSERT ON CONFLICT DO NOTHING"]:::system
+    OP -- "0 delete" --> DEL
+    INS --> DUP{"Same number under another type?"}:::decision
+    DUP -- Yes --> DUPR["Keep higher offhrs_flag,<br/>silently delete the other row"]:::system
+    DUP -- No --> OK["Saved"]:::terminal
+    DUPR --> OK
+    DEL --> AUD["Write audit trail (delete only)"]:::system
+    AUD --> OKD["Deleted"]:::terminal
 
-    subgraph BG ["Daily automated re-verification (no email)"]
+    subgraph FC ["Flow C: auto-resync"]
         direction TB
-        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["Re-verify via Govt DB"]:::external
-        M --> N{"Result"}:::decision
-        N -- "Now valid" --> O["Auto-mark verified"]:::system
-        N -- "Failed" --> P["Alert internal team (Google Chat)"]:::system
-    end
-
-    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
-        direction TB
-        Q["Internal team links HSN codes to a GST"]:::actor --> S["Dedupe + save mapping"]:::system
-        S --> T["Audit trail recorded"]:::system
-        S --> U["Notify every supplier account on that GST"]:::system
+        C1["Supplier edits mobile / landline / GSM<br/>in general profile-edit"]:::external --> C2["USER_UPSERT_ADDITIONAL consumer<br/>re-calls /pnssetting over HTTP"]:::system
+        C2 --> C3["Five-mapping cap enforced here"]:::terminal
     end
 </pre>
         </div>
@@ -459,16 +463,22 @@ flowchart TD
       <article class="card">
         <header id="d-dfd">
           <span class="ico"><i data-lucide="share-2"></i></span>
-          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where GST data moves across processes and stores</h3></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where an off-hours routing preference is written and read</h3></span>
         </header>
         <div class="explain">
-<p>Seven processes cover every flow (A&ndash;E):</p>
+<p>One table, one auto-resync consumer, one delete-cascade queue:</p>
           <ul>
-            <li><strong>1.0 Validate &amp; save</strong> reads the lock state from <code>D2</code>, writes the registration record to <code>D1</code>, publishes the change.</li>
-            <li><strong>2.0 Verify</strong> (async consumer) calls the Govt/BI API, writes verification state to <code>D2</code>, triggers the email.</li>
-            <li><strong>3.0 Fan-out</strong> keeps <code>D1</code> and the <code>D2</code> replicas in sync; <strong>4.0</strong> derives legal status.</li>
-            <li><strong>5.0 HSN mapping</strong> upserts <code>D3</code>, writes an audit row to <code>D4</code>, notifies accounts.</li>
-            <li><strong>6.0 Nightly cron</strong> scans the BigQuery mirrors (<code>D5</code>), republishes GLIDs, alerts Google Chat. <strong>7.0</strong> serves reads.</li>
+            <li><strong>1.0 Validate &amp; write</strong> re-derives the number, resolves the
+              type and inserts / updates / deletes <code>D1</code>.</li>
+            <li><strong>2.0 Duplicate-number resolver</strong> collapses a number that appears
+              under two types, keeping the higher <code>offhrs_flag</code>.</li>
+            <li><strong>3.0 Auto-resync consumer</strong> re-calls <code>/pnssetting</code> over
+              HTTP when the general profile-edit flow changes a phone number, enforcing the
+              five-cap.</li>
+            <li><strong>4.0 Delete-cascade</strong> queues an <code>IIL_PNS_SETTING</code>
+              delete when an additional contact is removed.</li>
+            <li><strong>5.0 Reads</strong> return one supplier's full detail, or a bulk check of
+              which GLIDs have an active off-hours flag.</li>
           </ul>
         </div>
         <div class="diagram-wrap">
@@ -478,53 +488,34 @@ flowchart LR
     classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
 
-    SUP["Supplier<br/>seller panel / app"]:::ext
-    ADM["GLADMIN / BI team"]:::ext
-    BI["Govt / BI GST<br/>Verification API"]:::ext
-    MAIL["Email / Notification"]:::ext
-    GCHAT["Google Chat alerts"]:::ext
+    SUP["Supplier app / admin"]:::ext
+    PROF["General profile-edit flow"]:::ext
+    RDR["Caller (read)"]:::ext
 
-    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
-    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
-    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
-    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
-    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
-    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
-    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+    P1(("1.0<br/>Validate &amp; write<br/>insert / update / delete")):::proc
+    P2(("2.0<br/>Duplicate-number<br/>resolver")):::proc
+    P3(("3.0<br/>Auto-resync<br/>consumer")):::proc
+    P4(("4.0<br/>Delete-cascade<br/>queue")):::proc
+    P5(("5.0<br/>Reads<br/>single + bulk")):::proc
 
-    D1[("D1 GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
-    D2[("D2 GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
-    D3[("D3 GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
-    D4[("D4 GL_ALL_MASTER_HISTORY (audit)")]:::store
-    D5[("D5 BigQuery history mirrors")]:::store
-    Q[["RabbitMQ queues"]]:::store
+    D1[("D1 IIL_PNS_SETTING")]:::store
+    D2[("D2 GLUSR_USR / GLUSR_USR_ADDT_CONTACT<br/>(number re-derived)")]:::store
+    D3[("D3 delete audit trail")]:::store
+    Q[["USER_UPSERT_ADDITIONAL + IIL_PNS_SETTING delete queue"]]:::store
 
-    SUP -->|"GST, PAN input"| P1
-    P1 -->|"lock-check read"| D2
-    P1 -->|"write registration"| D1
-    P1 -->|"publish change"| Q
-    Q --> P2
+    SUP -->|"type, offhrs_flag, contact id?"| P1
+    P1 -->|"read real number"| D2
+    P1 -->|"INSERT / UPDATE / DELETE"| D1
+    P1 --> P2
+    P2 -->|"drop lower-flag row"| D1
+    P1 -->|"delete only"| D3
+    PROF -->|"phone changed"| Q
     Q --> P3
-    Q --> P4
-    P2 -->|"verify request"| BI
-    BI -->|"turnover, nature, status"| P2
-    P2 -->|"verify state"| D2
-    P2 -->|"success / reject"| MAIL
-    P3 -->|"sync GST/PAN/CIN"| D1
-    P3 -->|"replica sync"| D2
-    P4 -->|"read GST"| D1
-    P4 -->|"legal status code"| D2
-    ADM -->|"INS_HSN / DEL_HSN"| P5
-    P5 -->|"upsert links"| D3
-    P5 -->|"audit row"| D4
-    P5 -->|"notify accounts"| Q
-    P6 -->|"scan changes"| D5
-    P6 -->|"republish GLIDs"| Q
-    P6 -.->|"failure alert"| GCHAT
-    SUP -->|"GET otherdetail / gethsnfromgst"| P7
-    P7 -->|"read"| D1
-    P7 -->|"read"| D3
-    P7 -->|"response"| SUP
+    P3 -->|"HTTP re-call /pnssetting (cap 5)"| P1
+    PROF -->|"additional contact removed"| P4
+    P4 --> Q
+    RDR -->|"single glid / bulk glids"| P5
+    P5 -->|"detail / active-flag check"| D1
 </pre>
         </div>
       </article>
@@ -532,149 +523,108 @@ flowchart LR
       <article class="card">
         <header id="d-seq">
           <span class="ico"><i data-lucide="list-ordered"></i></span>
-          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>GST submit &amp; verify, call by call</h3></span>
+          <span><span class="dtype">Sequence diagram &middot; Flow A + C</span><h3>Saving an off-hours preference, and the auto-resync</h3></span>
         </header>
         <div class="explain">
-<p>The synchronous API path is short; the real work is asynchronous:</p>
+<p>A direct save, then an automatic re-sync:</p>
           <ol>
-            <li>The API derives PAN, runs regex + checksum, then reads <code>src_id</code> for the lock-check.</li>
-            <li><strong>alt</strong> &mdash; if already verified, the caller gets a <code>200</code> business error and nothing is written.</li>
-            <li>Otherwise the registration row is written, a message published, supplier gets <code>200 OK</code>.</li>
-            <li>The consumer runs three things in <strong>par</strong>allel: MAIN-DB update, BI verify + <code>GLUSR_GST_DETAILS</code> write, conditional RTF upsert.</li>
-            <li><strong>alt</strong> &mdash; any goroutine failure republishes to <code>USER_GST_REPROCESS</code>; on full success the outcome email is sent.</li>
+            <li>The API checks the gateway, confirms the GSM exists, and re-derives the contact
+              number from the profile (never from the request).</li>
+            <li><strong>alt</strong> &mdash; insert / update (<code>offhrs_flag</code> 1&ndash;3)
+              runs <code>ON CONFLICT DO NOTHING</code> after a pre-check; delete
+              (<code>offhrs_flag</code> 0, or the <code>D</code> sentinel) removes rows and
+              writes the only audit trail this feature keeps.</li>
+            <li>If the same number now maps to two types, the lower-flag row is dropped.</li>
+            <li>Later, the supplier changes a mobile in the general profile-edit flow; the
+              <code>USER_UPSERT_ADDITIONAL</code> consumer calls <code>/pnssetting</code> again
+              over HTTP to re-sync, and here the five-mapping cap is enforced.</li>
           </ol>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
 sequenceDiagram
     autonumber
-    actor SUP as Supplier
-    participant API as write-API<br/>UserDetailsController
-    participant MAIN as mainPg<br/>COMP_REGISTRATIONS
-    participant MQ as RabbitMQ
-    participant C as USER_GST_LAST_MODIFIED<br/>consumer
-    participant BI as BI / Govt GST API
-    participant GST as GLUSR_GST_DETAILS<br/>meshPg + trustPg
-    participant MAILC as Email
+    actor SUP as Supplier app
+    participant API as write-API<br/>PnsSetting
+    participant PR as profile tables
+    participant DB as IIL_PNS_SETTING
+    participant CON as USER_UPSERT_ADDITIONAL consumer
 
-    SUP->>API: POST /details {type: CompRgst, GST}
-    API->>API: derive PAN, regex + checksum
-    API->>GST: SELECT src_id (lock-check)
-    alt GST already Tactical / OTP verified
-        GST-->>API: src_id = 2 / 3
-        API-->>SUP: 200 business error "GST already verified"
-    else editable
-        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
-        API->>MQ: publish GST_LAST_MODIFIED
-        API-->>SUP: 200 OK (accepted)
-        MQ->>C: deliver message
-        par MAIN-DB update
-            C->>MAIN: UpdateCompRegOnMain()
-        and BI verification
-            C->>BI: CallPubServiceBI()
-            BI-->>C: turnover, nature, status flag
-            C->>GST: UPDATE verification state + src_id
-        and RTF
-            C->>C: RTF upsert (if rtf_flag = 1)
-        end
-        alt any goroutine FAILURE
-            C->>MQ: republish USER_GST_REPROCESS
-        else all success
-            C->>MAILC: SentGstMail() success / rejection
-            MAILC-->>SUP: Email notification
-        end
+    SUP->>API: POST /pnssetting {type, offhrs_flag, contact id?}
+    API->>API: gateway check
+    API->>PR: confirm GSM exists + re-derive real number
+    alt offhrs_flag 1 / 2 / 3 (insert or update)
+        API->>DB: pre-check then INSERT ON CONFLICT DO NOTHING
+        API->>DB: if number now maps to two types, drop lower-flag row
+    else offhrs_flag 0 or D sentinel (delete)
+        API->>DB: delete row(s) for (supplier, contact)
+        API->>DB: write delete audit trail
     end
+    API-->>SUP: saved
+
+    Note over PR,CON: later - supplier edits a phone in general profile-edit
+    PR->>CON: USER_UPSERT_ADDITIONAL message
+    CON->>API: HTTP re-call /pnssetting to re-sync
+    API->>DB: apply, enforcing the five-mapping cap
+    API-->>CON: synced
 </pre>
         </div>
       </article>
 
-      <p class="note">Source: <code>GST KT/GST_Business_Doc.md</code> &amp; <code>GST_Technical_Doc.md</code>.
-        Table and function names are as they appear in the Go source; live DB schema is not
-        cross-verified.</p>
+      <p class="note">Source: <code>PNS Setting KT</code> business &amp; technical docs. The
+        max-five-mappings cap is disabled in the write API and only enforced in the auto-sync
+        consumer, so a direct GLADMIN caller can exceed it. Only delete writes history; the exact
+        meaning of <code>offhrs_flag</code> 1 vs 2 vs 3 is an open question, and the
+        contact-deletion cascade into <code>IIL_PNS_SETTING</code> is queued, not transactional
+        &mdash; all flagged in the source doc.</p>
     </section>
 
     <section class="glossary" id="glossary">
       <h2>Glossary</h2>
-      <p class="intro">Business terms used above. Verification states map to the internal
-        <code>FK_GST_VERIFICATION_SRC_ID</code> code shown in brackets.</p>
+      <p class="intro">Business terms used above.</p>
       <div class="gloss-group">
-        <h3><i data-lucide="shield-check"></i> Verification states &amp; locking</h3>
+        <h3><i data-lucide="phone-forwarded"></i> The preference</h3>
         <dl>
-          <dt>Unverified / freshly submitted <span style="font-weight:400">(src&nbsp;1)</span></dt>
-          <dd>GST just entered, or auto-matched at a basic level. The supplier can still edit it freely.</dd>
-          <dt>Tactical Verified <span style="font-weight:400">(src&nbsp;2)</span></dt>
-          <dd>The system auto-matched the GST against the Government / BI database. The GST is now <em>locked</em> &mdash; only a permissioned GLADMIN or a fresh OTP re-proof can edit it.</dd>
-          <dt>OTP Verified <span style="font-weight:400">(src&nbsp;3)</span></dt>
-          <dd>The supplier proved ownership with a one-time password. Strongest lock &mdash; can override even a rejected GST.</dd>
-          <dt>Rejected <span style="font-weight:400">(src&nbsp;4)</span></dt>
-          <dd>The GST failed verification. The supplier may resubmit a corrected GST; the nightly cron also re-checks these.</dd>
-          <dt>Manual Verification <span style="font-weight:400">(src&nbsp;5)</span></dt>
-          <dd>The system could not decide automatically. A human reviewer must confirm or reject.</dd>
-          <dt>GST lock</dt>
-          <dd>The rule that a Tactical- or OTP-verified GST cannot be changed through normal profile editing &mdash; a fraud-prevention feature, not a bug.</dd>
-          <dt>OTP re-proof</dt>
-          <dd>Re-submitting a one-time password to prove GST ownership; one of two routes (the other being a permissioned GLADMIN) that unlock a locked or rejected GST.</dd>
+          <dt>Off-hours routing</dt>
+          <dd>Whether a given number keeps ringing outside business hours. That is the only thing this feature decides.</dd>
+          <dt><code>IIL_PNS_SETTING</code></dt>
+          <dd>The table holding one row per (supplier, number-type, contact) mapping.</dd>
+          <dt><code>offhrs_flag</code></dt>
+          <dd>1 / 2 / 3 mean insert-or-update (all three are &ldquo;set&rdquo; values); 0 means delete. Reads treat 2 and 3 as &ldquo;off-hours active&rdquo;.</dd>
+          <dt>Re-derived contact number</dt>
+          <dd>The actual phone number is always read back from the profile tables server-side; the number in the request is never trusted. A non-numeric result is stored as &ldquo;INVALID&rdquo;.</dd>
+          <dt>GSM must exist</dt>
+          <dd>The supplier must already have a virtual GSM number, or the request is rejected with &ldquo;GSM Number does not exist&rdquo;.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="file-text"></i> Tax &amp; identity terms</h3>
+        <h3><i data-lucide="hash"></i> Number types</h3>
         <dl>
-          <dt>GSTIN / GST number</dt>
-          <dd>The 15-character Goods &amp; Services Tax Identification Number. It encodes the state code, the holder's PAN, and the entity type.</dd>
-          <dt>GSTIN checksum</dt>
-          <dd>A mathematical check digit inside the GST number, validated independently of format so typos and fabricated numbers are caught.</dd>
-          <dt>PAN</dt>
-          <dd>Permanent Account Number &mdash; the income-tax ID. It sits inside characters 3&ndash;12 of the GSTIN, so it is auto-extracted. Locked once the GST is verified.</dd>
-          <dt>CIN</dt>
-          <dd>Corporate Identification Number &mdash; the registration number for an incorporated company.</dd>
-          <dt>TAN</dt>
-          <dd>Tax Deduction and Collection Account Number.</dd>
-          <dt>IEC</dt>
-          <dd>Import Export Code. Re-checked by the nightly cron alongside GST.</dd>
-          <dt>Udyam</dt>
-          <dd>The government's MSME (micro / small / medium enterprise) registration number.</dd>
-          <dt>HSN</dt>
-          <dd>Harmonized System of Nomenclature &mdash; the tax-classification code for what a supplier sells. Linked to a GST via the HSN-mapping flow.</dd>
-          <dt>Legal Status / Company Type</dt>
-          <dd>Proprietorship, Partnership / LLP, Private Limited, HUF, Trust, etc. Derived automatically from one character of the GSTIN, so it cannot be inflated.</dd>
-          <dt>Nature of Business</dt>
-          <dd>Manufacturer, wholesaler, retailer, service provider &mdash; returned by the Government / BI verification.</dd>
-          <dt>Annual Turnover</dt>
-          <dd>The yearly-revenue band returned by the Government / BI verification.</dd>
+          <dt><code>M1</code> / <code>M2</code></dt>
+          <dd>Primary and alternate mobile &mdash; general types, no contact id needed.</dd>
+          <dt><code>L1</code> / <code>L2</code></dt>
+          <dd>Primary and secondary landline &mdash; general types, no contact id needed.</dd>
+          <dt><code>M</code> / <code>L</code> / <code>T</code></dt>
+          <dd>Additional-contact mobile / landline / tollfree &mdash; each needs a contact id.</dd>
+          <dt><code>D</code> sentinel</dt>
+          <dd>Not a real type; with <code>action_flag=&quot;d&quot;</code> it deletes every mapping row for a (supplier, contact) pair at once.</dd>
+          <dt>Duplicate-number resolution</dt>
+          <dd>A number can map to only one type; if it turns up under two, the row with the higher (or equal) <code>offhrs_flag</code> survives and the other is silently deleted.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="users"></i> People &amp; teams</h3>
+        <h3><i data-lucide="refresh-cw"></i> Automatic sync &amp; reads</h3>
         <dl>
-          <dt>Supplier</dt>
-          <dd>The IndiaMART seller who submits or edits the GST.</dd>
+          <dt>Auto-resync (Flow C)</dt>
+          <dd>When a supplier changes a mobile / landline / GSM in the ordinary profile-edit flow, a <code>USER_UPSERT_ADDITIONAL</code> consumer re-calls <code>/pnssetting</code> over HTTP so the preferences follow the new number.</dd>
+          <dt>Five-mapping cap</dt>
+          <dd>A limit of five active mappings per supplier &mdash; enforced only on the auto-resync path, not on direct API calls.</dd>
+          <dt>Delete-cascade</dt>
+          <dd>Removing an additional contact elsewhere queues a delete of its <code>IIL_PNS_SETTING</code> rows; there is a brief window where the contact is gone but its mapping is not.</dd>
+          <dt>Bulk read</dt>
+          <dd>Up to ten comma-separated GLIDs; the response says which of them have an off-hours flag of 2 or 3.</dd>
           <dt>GLID</dt>
-          <dd>GlobalID &mdash; the unique internal identifier for one user / company account.</dd>
-          <dt>GLADMIN</dt>
-          <dd>An internal admin user. With an explicit screen permission, can override a locked GST.</dd>
-          <dt>BI GST Team</dt>
-          <dd>IndiaMART's Business Intelligence team that runs the system cross-verifying GSTs against the government database.</dd>
-          <dt>Government GST Verification System</dt>
-          <dd>The external, government-backed system that confirms GST validity and returns turnover, nature of business, and registration year.</dd>
-        </dl>
-      </div>
-      <div class="gloss-group">
-        <h3><i data-lucide="workflow"></i> Systems &amp; processes</h3>
-        <dl>
-          <dt>Trust status / trust badge</dt>
-          <dd>The buyer-facing signal that a supplier is a real, tax-registered business. Improves once the GST is verified &mdash; separate from star ratings.</dd>
-          <dt>TACT re-verification cron</dt>
-          <dd>The nightly job that re-checks GSTs (and PAN / CIN / IEC / Udyam) changed in the last 24 hours, plus previously-rejected ones. Sends no supplier email.</dd>
-          <dt>Consumer</dt>
-          <dd>A background worker that processes queued messages asynchronously, after the API has already responded.</dd>
-          <dt>Fan-out</dt>
-          <dd>Propagating one GST change to every database that keeps a copy &mdash; registration record, verification record, and its trust-DB replica.</dd>
-          <dt>Reprocess / retry queue</dt>
-          <dd>Where a partially-failed GST update is re-queued so the change eventually lands in every database.</dd>
-          <dt>RTF (Real Time Feed)</dt>
-          <dd>A generic internal framework for pushing live data updates; reused conditionally by the GST flow.</dd>
-          <dt>Audit trail</dt>
-          <dd>A record of who changed what and when &mdash; written for every HSN mapping add or remove.</dd>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier.</dd>
         </dl>
       </div>
     </section>

@@ -1,6 +1,6 @@
 <meta charset="utf-8" />
-<title>GST &mdash; KT Diagrams</title>
-<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API GST feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<title>Bizfeed &amp; Recommendation &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Bizfeed &amp; Recommendation feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
@@ -330,14 +330,14 @@
 <div class="shell">
   <aside class="rail">
     <p class="mark">IndiaMART &middot; Users-API KT</p>
-    <p class="mark-title">GST</p>
+    <p class="mark-title">Bizfeed &amp; Recommendation</p>
     <nav>
       <ul>
         <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
-        <li><a href="#feature"><i data-lucide="shield-check"></i> GST</a></li>
+        <li><a href="#feature"><i data-lucide="activity"></i> Bizfeed &amp; Recommendation</a></li>
         <li><a href="#d-biz" class="sub">Business flowchart</a></li>
         <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
-        <li><a href="#d-seq" class="sub">Sequence &mdash; submit &amp; verify</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; activity + dashboard</a></li>
         <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
       </ul>
     </nav>
@@ -346,11 +346,13 @@
   <main>
     <p class="topbar">Knowledge Transfer &middot; Engineering</p>
 
-    <h1>GST &mdash; Goods &amp; Services Tax</h1>
-    <p class="lede">When a supplier submits or edits a GST number, a full verification process runs behind
-      one text field: format &amp; checksum checks, a lock on already-verified GSTs, an external
-      Government / BI verification call, automatic PAN and legal-status derivation, a nightly
-      re-verification cron, and a separate GST&nbsp;&harr;&nbsp;HSN tax-classification mapping flow.</p>
+    <h1>Bizfeed &amp; Recommendation</h1>
+    <p class="lede">One pipeline covers Buyer Activity, User Activity and Catalog View: a buyer's
+      browsing is written to a raw clickstream store, a Kafka consumer filters and transforms it
+      into supplier-facing <em>Bizfeed</em> entries, and the supplier can hide or unhide those
+      entries. A separate Recommendation dashboard fans out to four or five internal services in
+      parallel and merges the results into one priority-ranked &ldquo;action items&rdquo; list.
+      Not every buyer click becomes a feed entry &mdash; four silent filters sit in the middle.</p>
 
     <section class="legend" id="legend">
       <h2>How to read these diagrams</h2>
@@ -387,27 +389,40 @@
     </section>
 
     <section class="feature" id="feature">
-      <p class="kicker"><i data-lucide="shield-check"></i> Trust &amp; Compliance</p>
-      <h2>GST &mdash; Goods &amp; Services Tax</h2>
-      <p>GST is a <code>Type=CompRgst</code> branch of the shared user-details write endpoint.
-      The five business flows (A&ndash;E) are: first submit, locked-GST reject, daily TACT re-verify
-      cron, GST&nbsp;&harr;&nbsp;HSN mapping, and legal-status auto-computation.</p>
+      <p class="kicker"><i data-lucide="activity"></i> Engagement &amp; Insights</p>
+      <h2>Bizfeed &amp; Recommendation</h2>
+      <p><code>POST /user/addbuyeractivity</code> (gateways GLADMIN / LEAP) writes
+      <code>im_buyer_activity_attr_v2</code> (Cassandra). A Kafka consumer
+      (<code>workerUserBusinessFeeds</code>) drops self-views, blocked / fraud / employee
+      buyers, Redis &ldquo;meeting&rdquo; matches and over-long GLIDs, then inserts
+      <code>glusr_usr_biz_feeds</code> (Postgres) with a bounded retry.
+      <code>POST /user/bizfeed_hide_unhide</code> toggles <code>biz_feed_is_hidden</code> on a
+      (supplier, buyer, day) match. <code>GET /seller_recommendation</code> fans out to 4&ndash;5
+      HTTP services and always returns all 11 slots.</p>
 
       <article class="card">
         <header id="d-biz">
           <span class="ico"><i data-lucide="git-branch"></i></span>
-          <span><span class="dtype">Business flowchart</span><h3>What happens when a GST is submitted</h3></span>
+          <span><span class="dtype">Business flowchart</span><h3>Buyer clicks in, supplier insight out</h3></span>
         </header>
         <div class="explain">
-<p>Read top-down. The main path is a supplier edit; two self-contained
-          sub-flows hang off it with dotted links:</p>
-          <ol>
-            <li><strong>Format gate</strong> &mdash; 15 characters and a valid GSTIN checksum, else rejected.</li>
-            <li><strong>Lock gate</strong> &mdash; a <em>Tactical</em> or <em>OTP verified</em> GST is blocked for a normal supplier; only a permissioned GLADMIN or fresh OTP re-proof passes.</li>
-            <li><strong>Save &amp; verify</strong> &mdash; record saved, PAN auto-extracted, background check against the Government GST database.</li>
-            <li><strong>Outcome</strong> &mdash; pass &rArr; Tactical Verified + legal status + success email; needs-review &rArr; manual queue; fail &rArr; rejected.</li>
-            <li><strong>Nightly cron</strong> re-checks recently-changed and rejected GSTs silently. <strong>HSN mapping</strong> is admin-only.</li>
-          </ol>
+<p>Three cooperating parts:</p>
+          <ul>
+            <li><strong>Flow A &mdash; capture &amp; transform</strong>: a buyer action is stored
+              raw; a background stage then checks four things &mdash; is the buyer viewing their
+              own catalog, is the buyer blocked / fraud / an employee, was a recent offline
+              &ldquo;meeting&rdquo; logged, is the ID malformed &mdash; and only a clean event
+              becomes a Bizfeed entry (with the buyer's city / state attached).</li>
+            <li><strong>Flow B &mdash; hide / unhide</strong>: the supplier marks a feed entry
+              not useful; the toggle matches on (supplier, buyer, day), so multiple entries for
+              the same buyer on the same day move together. Hiding is a visibility flag, not a
+              delete.</li>
+            <li><strong>Flow C &mdash; recommendation dashboard</strong>: on open, the system
+              calls company-detail, product-listing, unread-message, Bizfeed and (paid-tier
+              only) credit services in parallel, merges them into a priority-ranked list, and
+              shows an empty slot for any service that failed &mdash; the dashboard never
+              errors out.</li>
+          </ul>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
@@ -418,39 +433,35 @@ flowchart TD
     classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
     classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
 
-    A["Supplier submits / edits GST<br/>seller panel or app"]:::actor
-    B{"Valid format?<br/>15 chars + checksum"}:::decision
-    A --> B
-    B -- No --> R1["Reject: invalid GST"]:::terminal
-    B -- Yes --> C{"Existing GST already<br/>Tactical / OTP verified?"}:::decision
-    C -- "Yes, normal supplier" --> R2["Reject: GST locked<br/>fraud-prevention"]:::terminal
-    C -- "Yes, GLADMIN w/ permission<br/>or OTP re-proof" --> D
-    C -- No --> D["Save GST record<br/>auto-extract PAN"]:::system
-    D --> E["Background: verify against<br/>Govt GST database"]:::external
-    E --> F{"Verification outcome"}:::decision
-    F -- Pass --> G["GST = Tactical Verified<br/>trust status updated"]:::system
-    F -- Needs review --> H["Manual verification queue"]:::system
-    F -- Fail --> I["GST Rejected<br/>supplier can resubmit"]:::terminal
-    G --> J["Auto-derive Legal Status<br/>from GSTIN"]:::system
-    G --> K["Email: GST updated successfully"]:::system
-    I --> K2["Email: GST rejection notice"]:::system
-    G -.->|"later, nightly re-check"| L
-    I -.->|"rejected GSTs re-checked too"| L
-    G -.->|"separate admin flow"| Q
-
-    subgraph BG ["Daily automated re-verification (no email)"]
+    subgraph FA ["Flow A: capture and transform"]
         direction TB
-        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["Re-verify via Govt DB"]:::external
-        M --> N{"Result"}:::decision
-        N -- "Now valid" --> O["Auto-mark verified"]:::system
-        N -- "Failed" --> P["Alert internal team (Google Chat)"]:::system
+        A["Buyer browses / searches"]:::actor --> AW["Write raw event to clickstream store"]:::system
+        AW --> AK["Kafka message to feed-generation consumer"]:::system
+        AK --> F1{"Buyer viewing own catalog?"}:::decision
+        F1 -- Yes --> DR["Drop, log only"]:::terminal
+        F1 -- No --> F2{"Buyer blocked / fraud / employee?"}:::decision
+        F2 -- Yes --> DR
+        F2 -- No --> F3{"Recent meeting logged (Redis)?"}:::decision
+        F3 -- Yes --> DR
+        F3 -- No --> F4{"GLID longer than 10 digits?"}:::decision
+        F4 -- Yes --> DR
+        F4 -- No --> AE["Attach buyer city / state<br/>INSERT glusr_usr_biz_feeds (retry on transient failure)"]:::system
+        AE --> AS["Supplier sees the feed entry"]:::terminal
     end
 
-    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
+    subgraph FB ["Flow B: hide / unhide"]
         direction TB
-        Q["Internal team links HSN codes to a GST"]:::actor --> S["Dedupe + save mapping"]:::system
-        S --> T["Audit trail recorded"]:::system
-        S --> U["Notify every supplier account on that GST"]:::system
+        B1["Supplier marks an entry not useful"]:::actor --> B2["Toggle biz_feed_is_hidden<br/>match on (supplier, buyer, day)"]:::system
+        B2 --> B3["All entries for that buyer + day move together<br/>(visibility flag, not delete)"]:::terminal
+    end
+
+    subgraph FC ["Flow C: recommendation dashboard"]
+        direction TB
+        C1["Supplier opens dashboard"]:::actor --> C2["Call company-detail, product-listing, unread-message,<br/>Bizfeed and (paid tier) credit services in parallel"]:::external
+        C2 --> C3["Merge into 11 priority-ranked slots"]:::system
+        C3 --> C4{"A service failed?"}:::decision
+        C4 -- Yes --> C5["That slot shows an empty / zero count<br/>dashboard still renders"]:::terminal
+        C4 -- No --> C6["Full action-items list"]:::terminal
     end
 </pre>
         </div>
@@ -459,16 +470,19 @@ flowchart TD
       <article class="card">
         <header id="d-dfd">
           <span class="ico"><i data-lucide="share-2"></i></span>
-          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where GST data moves across processes and stores</h3></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where activity is captured, filtered and served</h3></span>
         </header>
         <div class="explain">
-<p>Seven processes cover every flow (A&ndash;E):</p>
+<p>A write-optimised store feeding a read-optimised one:</p>
           <ul>
-            <li><strong>1.0 Validate &amp; save</strong> reads the lock state from <code>D2</code>, writes the registration record to <code>D1</code>, publishes the change.</li>
-            <li><strong>2.0 Verify</strong> (async consumer) calls the Govt/BI API, writes verification state to <code>D2</code>, triggers the email.</li>
-            <li><strong>3.0 Fan-out</strong> keeps <code>D1</code> and the <code>D2</code> replicas in sync; <strong>4.0</strong> derives legal status.</li>
-            <li><strong>5.0 HSN mapping</strong> upserts <code>D3</code>, writes an audit row to <code>D4</code>, notifies accounts.</li>
-            <li><strong>6.0 Nightly cron</strong> scans the BigQuery mirrors (<code>D5</code>), republishes GLIDs, alerts Google Chat. <strong>7.0</strong> serves reads.</li>
+            <li><strong>1.0 Activity write</strong> appends the raw event to <code>D1</code>
+              (Cassandra).</li>
+            <li><strong>2.0 Feed-generation consumer</strong> reads block / blacklist / employee
+              / product tables <code>D3</code> and a Redis key, then inserts <code>D2</code>.</li>
+            <li><strong>3.0 Hide / unhide write</strong> updates <code>D2</code> on a composite
+              match.</li>
+            <li><strong>4.0 Recommendation fan-out</strong> calls 4&ndash;5 external services and
+              merges; it touches no database directly.</li>
           </ul>
         </div>
         <div class="diagram-wrap">
@@ -478,53 +492,31 @@ flowchart LR
     classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
 
-    SUP["Supplier<br/>seller panel / app"]:::ext
-    ADM["GLADMIN / BI team"]:::ext
-    BI["Govt / BI GST<br/>Verification API"]:::ext
-    MAIL["Email / Notification"]:::ext
-    GCHAT["Google Chat alerts"]:::ext
+    BUY["Buyer"]:::ext
+    SUP["Supplier"]:::ext
+    SVC["4-5 internal services"]:::ext
 
-    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
-    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
-    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
-    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
-    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
-    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
-    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+    P1(("1.0<br/>Activity write")):::proc
+    P2(("2.0<br/>Feed-generation<br/>consumer")):::proc
+    P3(("3.0<br/>Hide / unhide<br/>write")):::proc
+    P4(("4.0<br/>Recommendation<br/>fan-out")):::proc
 
-    D1[("D1 GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
-    D2[("D2 GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
-    D3[("D3 GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
-    D4[("D4 GL_ALL_MASTER_HISTORY (audit)")]:::store
-    D5[("D5 BigQuery history mirrors")]:::store
-    Q[["RabbitMQ queues"]]:::store
+    D1[("D1 im_buyer_activity_attr_v2<br/>csl-cassandra")]:::store
+    D2[("D2 glusr_usr_biz_feeds<br/>cslpg")]:::store
+    D3[("D3 glusr_usr / blacklist /<br/>employee / pc_item")]:::store
+    R[["Kafka USER_BUSINESS_FEED + bizfeed Redis (meeting key)"]]:::store
 
-    SUP -->|"GST, PAN input"| P1
-    P1 -->|"lock-check read"| D2
-    P1 -->|"write registration"| D1
-    P1 -->|"publish change"| Q
-    Q --> P2
-    Q --> P3
-    Q --> P4
-    P2 -->|"verify request"| BI
-    BI -->|"turnover, nature, status"| P2
-    P2 -->|"verify state"| D2
-    P2 -->|"success / reject"| MAIL
-    P3 -->|"sync GST/PAN/CIN"| D1
-    P3 -->|"replica sync"| D2
-    P4 -->|"read GST"| D1
-    P4 -->|"legal status code"| D2
-    ADM -->|"INS_HSN / DEL_HSN"| P5
-    P5 -->|"upsert links"| D3
-    P5 -->|"audit row"| D4
-    P5 -->|"notify accounts"| Q
-    P6 -->|"scan changes"| D5
-    P6 -->|"republish GLIDs"| Q
-    P6 -.->|"failure alert"| GCHAT
-    SUP -->|"GET otherdetail / gethsnfromgst"| P7
-    P7 -->|"read"| D1
-    P7 -->|"read"| D3
-    P7 -->|"response"| SUP
+    BUY -->|"browse / search"| P1
+    P1 -->|"INSERT raw event"| D1
+    P1 -->|"publish"| R
+    R --> P2
+    P2 -->|"block / fraud / employee checks"| D3
+    P2 -->|"meeting EXISTS"| R
+    P2 -->|"INSERT feed row"| D2
+    SUP -->|"hide / unhide"| P3
+    P3 -->|"UPDATE on (supplier, buyer, day)"| D2
+    SUP -->|"open dashboard"| P4
+    P4 -->|"parallel HTTP"| SVC
 </pre>
         </div>
       </article>
@@ -532,149 +524,112 @@ flowchart LR
       <article class="card">
         <header id="d-seq">
           <span class="ico"><i data-lucide="list-ordered"></i></span>
-          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>GST submit &amp; verify, call by call</h3></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + C</span><h3>A buyer activity becoming a feed entry, and the recommendation fan-out</h3></span>
         </header>
         <div class="explain">
-<p>The synchronous API path is short; the real work is asynchronous:</p>
+<p>An activity becoming a feed entry, then a dashboard load:</p>
           <ol>
-            <li>The API derives PAN, runs regex + checksum, then reads <code>src_id</code> for the lock-check.</li>
-            <li><strong>alt</strong> &mdash; if already verified, the caller gets a <code>200</code> business error and nothing is written.</li>
-            <li>Otherwise the registration row is written, a message published, supplier gets <code>200 OK</code>.</li>
-            <li>The consumer runs three things in <strong>par</strong>allel: MAIN-DB update, BI verify + <code>GLUSR_GST_DETAILS</code> write, conditional RTF upsert.</li>
-            <li><strong>alt</strong> &mdash; any goroutine failure republishes to <code>USER_GST_REPROCESS</code>; on full success the outcome email is sent.</li>
+            <li>A buyer action is posted and written straight to the Cassandra clickstream
+              store; a Kafka message follows.</li>
+            <li>The consumer runs the gates. <strong>alt</strong> &mdash; self-view, blocked
+              buyer, Redis meeting match or over-long GLID: the message is dropped with only a
+              log line; otherwise the buyer's city / state is looked up and a
+              <code>glusr_usr_biz_feeds</code> row is inserted (retried on transient failure).</li>
+            <li>Separately, the supplier opens the recommendation dashboard.</li>
+            <li><strong>par</strong> &mdash; company-detail, product-listing, unread-message,
+              Bizfeed and (if not free-tier) credit services are called at once; results merge
+              into 11 priority-ranked slots, empty ones defaulting to a zero count.</li>
           </ol>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
 sequenceDiagram
     autonumber
-    actor SUP as Supplier
-    participant API as write-API<br/>UserDetailsController
-    participant MAIN as mainPg<br/>COMP_REGISTRATIONS
-    participant MQ as RabbitMQ
-    participant C as USER_GST_LAST_MODIFIED<br/>consumer
-    participant BI as BI / Govt GST API
-    participant GST as GLUSR_GST_DETAILS<br/>meshPg + trustPg
-    participant MAILC as Email
+    actor BUY as Buyer
+    participant AW as write-API<br/>BuyerActivity
+    participant CS as Cassandra<br/>clickstream
+    participant K as Kafka
+    participant WK as feed-generation consumer
+    participant PG as cslpg<br/>glusr_usr_biz_feeds
+    actor SUP as Supplier, later
+    participant RC as read-API<br/>SellerRecommendation
+    participant SVC as 4-5 internal services
 
-    SUP->>API: POST /details {type: CompRgst, GST}
-    API->>API: derive PAN, regex + checksum
-    API->>GST: SELECT src_id (lock-check)
-    alt GST already Tactical / OTP verified
-        GST-->>API: src_id = 2 / 3
-        API-->>SUP: 200 business error "GST already verified"
-    else editable
-        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
-        API->>MQ: publish GST_LAST_MODIFIED
-        API-->>SUP: 200 OK (accepted)
-        MQ->>C: deliver message
-        par MAIN-DB update
-            C->>MAIN: UpdateCompRegOnMain()
-        and BI verification
-            C->>BI: CallPubServiceBI()
-            BI-->>C: turnover, nature, status flag
-            C->>GST: UPDATE verification state + src_id
-        and RTF
-            C->>C: RTF upsert (if rtf_flag = 1)
-        end
-        alt any goroutine FAILURE
-            C->>MQ: republish USER_GST_REPROCESS
-        else all success
-            C->>MAILC: SentGstMail() success / rejection
-            MAILC-->>SUP: Email notification
-        end
+    BUY->>AW: POST /user/addbuyeractivity
+    AW->>CS: INSERT raw event (32 cols)
+    AW->>K: publish activity message
+    K->>WK: deliver
+    alt self-view / blocked / meeting / over-long GLID
+        WK-->>K: drop, log only
+    else clean event
+        WK->>PG: lookup city / state, INSERT feed row (retry on transient failure)
     end
+
+    Note over SUP,SVC: later - supplier opens the recommendation dashboard
+    SUP->>RC: GET /seller_recommendation
+    par company + product + unread + bizfeed + credit
+        RC->>SVC: parallel HTTP calls
+        SVC-->>RC: partial results
+    end
+    RC->>RC: merge into 11 priority-ranked slots, empty slot to zero count
+    RC-->>SUP: action-items list (never errors out)
 </pre>
         </div>
       </article>
 
-      <p class="note">Source: <code>GST KT/GST_Business_Doc.md</code> &amp; <code>GST_Technical_Doc.md</code>.
-        Table and function names are as they appear in the Go source; live DB schema is not
-        cross-verified.</p>
+      <p class="note">Source: <code>Bizfeed And Recommendation KT</code> business &amp; technical docs.
+        User Activity, Buyer Activity and Catalog View are one pipeline on one table; the Kafka
+        producer and the Redis &ldquo;meeting&rdquo; key's writer sit outside the three repos.
+        The block-gate is fail-open, hide / unhide has no row-level granularity, and the PayIM
+        recommendation slot is always empty &mdash; all flagged in the source doc.</p>
     </section>
 
     <section class="glossary" id="glossary">
       <h2>Glossary</h2>
-      <p class="intro">Business terms used above. Verification states map to the internal
-        <code>FK_GST_VERIFICATION_SRC_ID</code> code shown in brackets.</p>
+      <p class="intro">Business terms used above.</p>
       <div class="gloss-group">
-        <h3><i data-lucide="shield-check"></i> Verification states &amp; locking</h3>
+        <h3><i data-lucide="activity"></i> The pipeline</h3>
         <dl>
-          <dt>Unverified / freshly submitted <span style="font-weight:400">(src&nbsp;1)</span></dt>
-          <dd>GST just entered, or auto-matched at a basic level. The supplier can still edit it freely.</dd>
-          <dt>Tactical Verified <span style="font-weight:400">(src&nbsp;2)</span></dt>
-          <dd>The system auto-matched the GST against the Government / BI database. The GST is now <em>locked</em> &mdash; only a permissioned GLADMIN or a fresh OTP re-proof can edit it.</dd>
-          <dt>OTP Verified <span style="font-weight:400">(src&nbsp;3)</span></dt>
-          <dd>The supplier proved ownership with a one-time password. Strongest lock &mdash; can override even a rejected GST.</dd>
-          <dt>Rejected <span style="font-weight:400">(src&nbsp;4)</span></dt>
-          <dd>The GST failed verification. The supplier may resubmit a corrected GST; the nightly cron also re-checks these.</dd>
-          <dt>Manual Verification <span style="font-weight:400">(src&nbsp;5)</span></dt>
-          <dd>The system could not decide automatically. A human reviewer must confirm or reject.</dd>
-          <dt>GST lock</dt>
-          <dd>The rule that a Tactical- or OTP-verified GST cannot be changed through normal profile editing &mdash; a fraud-prevention feature, not a bug.</dd>
-          <dt>OTP re-proof</dt>
-          <dd>Re-submitting a one-time password to prove GST ownership; one of two routes (the other being a permissioned GLADMIN) that unlock a locked or rejected GST.</dd>
+          <dt>Buyer Activity</dt>
+          <dd>A captured buyer interaction &mdash; a search, a product view, a category browse. Written raw first, filtered later.</dd>
+          <dt>Clickstream store</dt>
+          <dd>A high-write Cassandra table (<code>im_buyer_activity_attr_v2</code>) holding every raw event, append-only.</dd>
+          <dt>Bizfeed</dt>
+          <dd>The supplier-facing feed of &ldquo;a buyer viewed your product, from this city&rdquo; entries, generated from clean activity events.</dd>
+          <dt>Feed-generation consumer</dt>
+          <dd>A Kafka worker that transforms raw events into <code>glusr_usr_biz_feeds</code> rows after running the filters.</dd>
+          <dt>Catalog View / User Activity</dt>
+          <dd>Other names for events on the same pipeline and table, distinguished by an activity-type id.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="file-text"></i> Tax &amp; identity terms</h3>
+        <h3><i data-lucide="filter"></i> The four filters</h3>
         <dl>
-          <dt>GSTIN / GST number</dt>
-          <dd>The 15-character Goods &amp; Services Tax Identification Number. It encodes the state code, the holder's PAN, and the entity type.</dd>
-          <dt>GSTIN checksum</dt>
-          <dd>A mathematical check digit inside the GST number, validated independently of format so typos and fabricated numbers are caught.</dd>
-          <dt>PAN</dt>
-          <dd>Permanent Account Number &mdash; the income-tax ID. It sits inside characters 3&ndash;12 of the GSTIN, so it is auto-extracted. Locked once the GST is verified.</dd>
-          <dt>CIN</dt>
-          <dd>Corporate Identification Number &mdash; the registration number for an incorporated company.</dd>
-          <dt>TAN</dt>
-          <dd>Tax Deduction and Collection Account Number.</dd>
-          <dt>IEC</dt>
-          <dd>Import Export Code. Re-checked by the nightly cron alongside GST.</dd>
-          <dt>Udyam</dt>
-          <dd>The government's MSME (micro / small / medium enterprise) registration number.</dd>
-          <dt>HSN</dt>
-          <dd>Harmonized System of Nomenclature &mdash; the tax-classification code for what a supplier sells. Linked to a GST via the HSN-mapping flow.</dd>
-          <dt>Legal Status / Company Type</dt>
-          <dd>Proprietorship, Partnership / LLP, Private Limited, HUF, Trust, etc. Derived automatically from one character of the GSTIN, so it cannot be inflated.</dd>
-          <dt>Nature of Business</dt>
-          <dd>Manufacturer, wholesaler, retailer, service provider &mdash; returned by the Government / BI verification.</dd>
-          <dt>Annual Turnover</dt>
-          <dd>The yearly-revenue band returned by the Government / BI verification.</dd>
+          <dt>Self-view</dt>
+          <dd>A supplier viewing their own catalog never generates a feed entry.</dd>
+          <dt>Block gate</dt>
+          <dd>Disabled, blacklisted (by mobile / email / domain), invalid-mobile or internal-employee buyers are dropped. If the gate's query errors, the event is let through (fail-open).</dd>
+          <dt>Meeting bypass</dt>
+          <dd>If a Redis key for the buyer exists &mdash; taken to mean a recent offline sales meeting &mdash; the event is dropped as redundant.</dd>
+          <dt>GLID length</dt>
+          <dd>A buyer or seller id longer than 10 digits is treated as invalid data and dropped silently.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="users"></i> People &amp; teams</h3>
+        <h3><i data-lucide="layout-dashboard"></i> Hide &amp; recommend</h3>
         <dl>
-          <dt>Supplier</dt>
-          <dd>The IndiaMART seller who submits or edits the GST.</dd>
+          <dt>Hide / unhide</dt>
+          <dd>A visibility toggle on feed entries. <code>1</code> hides; <code>0</code> clears the flag (stored as NULL). Data is never deleted.</dd>
+          <dt>(supplier, buyer, day) match</dt>
+          <dd>The only match key the toggle has; several entries for one buyer on one day are hidden or shown as a group, not individually.</dd>
+          <dt>Recommendation dashboard</dt>
+          <dd>An aggregator that calls company-detail, product-listing, unread-message, Bizfeed and credit services in parallel and merges them into one ranked list.</dd>
+          <dt>Free-tier re-ranking</dt>
+          <dd>For a free-tier supplier the credit service is skipped and the remaining items are re-prioritised (profile / GST completeness rises).</dd>
+          <dt>Always-complete response</dt>
+          <dd>All 11 recommendation slots are always present; a failed or suppressed service yields an empty slot with a zero count, never an error.</dd>
           <dt>GLID</dt>
-          <dd>GlobalID &mdash; the unique internal identifier for one user / company account.</dd>
-          <dt>GLADMIN</dt>
-          <dd>An internal admin user. With an explicit screen permission, can override a locked GST.</dd>
-          <dt>BI GST Team</dt>
-          <dd>IndiaMART's Business Intelligence team that runs the system cross-verifying GSTs against the government database.</dd>
-          <dt>Government GST Verification System</dt>
-          <dd>The external, government-backed system that confirms GST validity and returns turnover, nature of business, and registration year.</dd>
-        </dl>
-      </div>
-      <div class="gloss-group">
-        <h3><i data-lucide="workflow"></i> Systems &amp; processes</h3>
-        <dl>
-          <dt>Trust status / trust badge</dt>
-          <dd>The buyer-facing signal that a supplier is a real, tax-registered business. Improves once the GST is verified &mdash; separate from star ratings.</dd>
-          <dt>TACT re-verification cron</dt>
-          <dd>The nightly job that re-checks GSTs (and PAN / CIN / IEC / Udyam) changed in the last 24 hours, plus previously-rejected ones. Sends no supplier email.</dd>
-          <dt>Consumer</dt>
-          <dd>A background worker that processes queued messages asynchronously, after the API has already responded.</dd>
-          <dt>Fan-out</dt>
-          <dd>Propagating one GST change to every database that keeps a copy &mdash; registration record, verification record, and its trust-DB replica.</dd>
-          <dt>Reprocess / retry queue</dt>
-          <dd>Where a partially-failed GST update is re-queued so the change eventually lands in every database.</dd>
-          <dt>RTF (Real Time Feed)</dt>
-          <dd>A generic internal framework for pushing live data updates; reused conditionally by the GST flow.</dd>
-          <dt>Audit trail</dt>
-          <dd>A record of who changed what and when &mdash; written for every HSN mapping add or remove.</dd>
+          <dd>GlobalID &mdash; the unique internal identifier for a buyer or supplier.</dd>
         </dl>
       </div>
     </section>

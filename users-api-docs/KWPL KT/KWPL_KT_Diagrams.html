@@ -1,6 +1,6 @@
 <meta charset="utf-8" />
-<title>GST &mdash; KT Diagrams</title>
-<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API GST feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<title>KWPL (Paid Listing Keywords) &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API KWPL (Paid Listing Keywords) feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
@@ -330,14 +330,14 @@
 <div class="shell">
   <aside class="rail">
     <p class="mark">IndiaMART &middot; Users-API KT</p>
-    <p class="mark-title">GST</p>
+    <p class="mark-title">KWPL (Paid Listing Keywords)</p>
     <nav>
       <ul>
         <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
-        <li><a href="#feature"><i data-lucide="shield-check"></i> GST</a></li>
+        <li><a href="#feature"><i data-lucide="megaphone"></i> KWPL (Paid Listing Keywords)</a></li>
         <li><a href="#d-biz" class="sub">Business flowchart</a></li>
         <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
-        <li><a href="#d-seq" class="sub">Sequence &mdash; submit &amp; verify</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; create then disable</a></li>
         <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
       </ul>
     </nav>
@@ -346,11 +346,13 @@
   <main>
     <p class="topbar">Knowledge Transfer &middot; Engineering</p>
 
-    <h1>GST &mdash; Goods &amp; Services Tax</h1>
-    <p class="lede">When a supplier submits or edits a GST number, a full verification process runs behind
-      one text field: format &amp; checksum checks, a lock on already-verified GSTs, an external
-      Government / BI verification call, automatic PAN and legal-status derivation, a nightly
-      re-verification cron, and a separate GST&nbsp;&harr;&nbsp;HSN tax-classification mapping flow.</p>
+    <h1>KWPL &mdash; Paid Listing Keywords</h1>
+    <p class="lede">KWPL (&ldquo;paid listing keyword&rdquo;, table <code>PL_KWRD</code>) is an internal
+      record of which keywords, in which city, against which work order, were served to a
+      supplier and for what validity window. It is not customer-facing &mdash; only two internal
+      tools may write it, there is no read API, and no queue, cron or notification is attached.
+      One endpoint handles four actions via an <code>ACTION</code> parameter, and every action
+      reports the same success string whether or not a row actually changed.</p>
 
     <section class="legend" id="legend">
       <h2>How to read these diagrams</h2>
@@ -387,27 +389,37 @@
     </section>
 
     <section class="feature" id="feature">
-      <p class="kicker"><i data-lucide="shield-check"></i> Trust &amp; Compliance</p>
-      <h2>GST &mdash; Goods &amp; Services Tax</h2>
-      <p>GST is a <code>Type=CompRgst</code> branch of the shared user-details write endpoint.
-      The five business flows (A&ndash;E) are: first submit, locked-GST reject, daily TACT re-verify
-      cron, GST&nbsp;&harr;&nbsp;HSN mapping, and legal-status auto-computation.</p>
+      <p class="kicker"><i data-lucide="megaphone"></i> Seller Growth</p>
+      <h2>KWPL &mdash; Paid Listing Keywords</h2>
+      <p><code>POST /kwpl</code> (gateways GLADMIN / WEBERP). <code>ACTION</code> =
+      <code>INSERT</code> (new <code>PL_KWRD</code> row, <code>RETURNING pl_kwrd_id</code>),
+      <code>DISABLE</code> (set the enable flag off), <code>UPDATE</code> (extend validity-end
+      and work order), <code>SEARCH_UPDATE</code> (change only the keyword term). The three
+      mutating actions match only currently-active rows (<code>PL_KWRD_ENABLE = -1</code> is the
+      &ldquo;active&rdquo; sentinel) on (supplier, serve-id), or on the row id for
+      <code>SEARCH_UPDATE</code>. Exactly one meshpg round-trip per request; no
+      rows-affected check.</p>
 
       <article class="card">
         <header id="d-biz">
           <span class="ico"><i data-lucide="git-branch"></i></span>
-          <span><span class="dtype">Business flowchart</span><h3>What happens when a GST is submitted</h3></span>
+          <span><span class="dtype">Business flowchart</span><h3>A system-of-record for paid keyword placements</h3></span>
         </header>
         <div class="explain">
-<p>Read top-down. The main path is a supplier edit; two self-contained
-          sub-flows hang off it with dotted links:</p>
-          <ol>
-            <li><strong>Format gate</strong> &mdash; 15 characters and a valid GSTIN checksum, else rejected.</li>
-            <li><strong>Lock gate</strong> &mdash; a <em>Tactical</em> or <em>OTP verified</em> GST is blocked for a normal supplier; only a permissioned GLADMIN or fresh OTP re-proof passes.</li>
-            <li><strong>Save &amp; verify</strong> &mdash; record saved, PAN auto-extracted, background check against the Government GST database.</li>
-            <li><strong>Outcome</strong> &mdash; pass &rArr; Tactical Verified + legal status + success email; needs-review &rArr; manual queue; fail &rArr; rejected.</li>
-            <li><strong>Nightly cron</strong> re-checks recently-changed and rejected GSTs silently. <strong>HSN mapping</strong> is admin-only.</li>
-          </ol>
+<p>Four actions on one table:</p>
+          <ul>
+            <li><strong>INSERT</strong> &mdash; a new paid-keyword placement goes on record:
+              supplier, city, company, keyword, description, from / to dates and a work-order id.
+              It starts active.</li>
+            <li><strong>DISABLE</strong> &mdash; an active record is switched off when a campaign
+              ends. An already-disabled record is untouched.</li>
+            <li><strong>UPDATE</strong> &mdash; an active record's validity-end date and / or
+              work-order id are revised, e.g. to extend a campaign.</li>
+            <li><strong>SEARCH_UPDATE</strong> &mdash; only the keyword term is changed, leaving
+              everything else as-is.</li>
+          </ul>
+          <p>The response says &ldquo;success&rdquo; as long as no database error occurs &mdash;
+          even when no row matched. There are no notifications and no supplier-facing view.</p>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
@@ -415,43 +427,21 @@ flowchart TD
     classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
     classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
-    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
     classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
 
-    A["Supplier submits / edits GST<br/>seller panel or app"]:::actor
-    B{"Valid format?<br/>15 chars + checksum"}:::decision
-    A --> B
-    B -- No --> R1["Reject: invalid GST"]:::terminal
-    B -- Yes --> C{"Existing GST already<br/>Tactical / OTP verified?"}:::decision
-    C -- "Yes, normal supplier" --> R2["Reject: GST locked<br/>fraud-prevention"]:::terminal
-    C -- "Yes, GLADMIN w/ permission<br/>or OTP re-proof" --> D
-    C -- No --> D["Save GST record<br/>auto-extract PAN"]:::system
-    D --> E["Background: verify against<br/>Govt GST database"]:::external
-    E --> F{"Verification outcome"}:::decision
-    F -- Pass --> G["GST = Tactical Verified<br/>trust status updated"]:::system
-    F -- Needs review --> H["Manual verification queue"]:::system
-    F -- Fail --> I["GST Rejected<br/>supplier can resubmit"]:::terminal
-    G --> J["Auto-derive Legal Status<br/>from GSTIN"]:::system
-    G --> K["Email: GST updated successfully"]:::system
-    I --> K2["Email: GST rejection notice"]:::system
-    G -.->|"later, nightly re-check"| L
-    I -.->|"rejected GSTs re-checked too"| L
-    G -.->|"separate admin flow"| Q
-
-    subgraph BG ["Daily automated re-verification (no email)"]
-        direction TB
-        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["Re-verify via Govt DB"]:::external
-        M --> N{"Result"}:::decision
-        N -- "Now valid" --> O["Auto-mark verified"]:::system
-        N -- "Failed" --> P["Alert internal team (Google Chat)"]:::system
-    end
-
-    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
-        direction TB
-        Q["Internal team links HSN codes to a GST"]:::actor --> S["Dedupe + save mapping"]:::system
-        S --> T["Audit trail recorded"]:::system
-        S --> U["Notify every supplier account on that GST"]:::system
-    end
+    A["Internal tool (GLADMIN / WEBERP)<br/>POST /kwpl"]:::actor --> G{"Gateway ok?<br/>+ action-specific mandatory fields"}:::decision
+    G -- No --> RJ["Reject"]:::terminal
+    G -- Yes --> AC{"ACTION"}:::decision
+    AC -- INSERT --> IN["INSERT new PL_KWRD row (active)<br/>RETURNING pl_kwrd_id"]:::system
+    AC -- DISABLE --> DE["UPDATE enable flag off<br/>WHERE (supplier, serve-id) AND active"]:::system
+    AC -- UPDATE --> UP["UPDATE validity-end + work-order id<br/>WHERE (supplier, serve-id) AND active"]:::system
+    AC -- SEARCH_UPDATE --> SU["UPDATE keyword term only<br/>WHERE row id, or (supplier, serve-id), AND active"]:::system
+    IN --> R["Respond: success"]:::terminal
+    DE --> M{"Any active row matched?"}:::decision
+    UP --> M
+    SU --> M
+    M -- Yes --> R
+    M -- No --> R2["Still responds: success (no rows-affected check)"]:::terminal
 </pre>
         </div>
       </article>
@@ -459,16 +449,17 @@ flowchart TD
       <article class="card">
         <header id="d-dfd">
           <span class="ico"><i data-lucide="share-2"></i></span>
-          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where GST data moves across processes and stores</h3></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where a paid-keyword serve record is written</h3></span>
         </header>
         <div class="explain">
-<p>Seven processes cover every flow (A&ndash;E):</p>
+<p>A single synchronous writer, nothing downstream:</p>
           <ul>
-            <li><strong>1.0 Validate &amp; save</strong> reads the lock state from <code>D2</code>, writes the registration record to <code>D1</code>, publishes the change.</li>
-            <li><strong>2.0 Verify</strong> (async consumer) calls the Govt/BI API, writes verification state to <code>D2</code>, triggers the email.</li>
-            <li><strong>3.0 Fan-out</strong> keeps <code>D1</code> and the <code>D2</code> replicas in sync; <strong>4.0</strong> derives legal status.</li>
-            <li><strong>5.0 HSN mapping</strong> upserts <code>D3</code>, writes an audit row to <code>D4</code>, notifies accounts.</li>
-            <li><strong>6.0 Nightly cron</strong> scans the BigQuery mirrors (<code>D5</code>), republishes GLIDs, alerts Google Chat. <strong>7.0</strong> serves reads.</li>
+            <li><strong>1.0 Validate &amp; branch</strong> checks the gateway and the
+              action-specific mandatory fields.</li>
+            <li><strong>2.0 Write</strong> inserts a new <code>PL_KWRD</code> row, or updates an
+              active one, in <code>D1</code> (meshpg) &mdash; one round-trip, no preceding
+              existence check, no rows-affected check.</li>
+            <li>No read endpoint, queue, consumer or cron touches this table.</li>
           </ul>
         </div>
         <div class="diagram-wrap">
@@ -478,53 +469,16 @@ flowchart LR
     classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
 
-    SUP["Supplier<br/>seller panel / app"]:::ext
-    ADM["GLADMIN / BI team"]:::ext
-    BI["Govt / BI GST<br/>Verification API"]:::ext
-    MAIL["Email / Notification"]:::ext
-    GCHAT["Google Chat alerts"]:::ext
+    OPS["Internal tools (GLADMIN / WEBERP)"]:::ext
 
-    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
-    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
-    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
-    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
-    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
-    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
-    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+    P1(("1.0<br/>Validate &amp; branch<br/>(4-way ACTION)")):::proc
+    P2(("2.0<br/>Write<br/>INSERT / UPDATE")):::proc
 
-    D1[("D1 GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
-    D2[("D2 GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
-    D3[("D3 GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
-    D4[("D4 GL_ALL_MASTER_HISTORY (audit)")]:::store
-    D5[("D5 BigQuery history mirrors")]:::store
-    Q[["RabbitMQ queues"]]:::store
+    D1[("D1 PL_KWRD<br/>meshpg")]:::store
 
-    SUP -->|"GST, PAN input"| P1
-    P1 -->|"lock-check read"| D2
-    P1 -->|"write registration"| D1
-    P1 -->|"publish change"| Q
-    Q --> P2
-    Q --> P3
-    Q --> P4
-    P2 -->|"verify request"| BI
-    BI -->|"turnover, nature, status"| P2
-    P2 -->|"verify state"| D2
-    P2 -->|"success / reject"| MAIL
-    P3 -->|"sync GST/PAN/CIN"| D1
-    P3 -->|"replica sync"| D2
-    P4 -->|"read GST"| D1
-    P4 -->|"legal status code"| D2
-    ADM -->|"INS_HSN / DEL_HSN"| P5
-    P5 -->|"upsert links"| D3
-    P5 -->|"audit row"| D4
-    P5 -->|"notify accounts"| Q
-    P6 -->|"scan changes"| D5
-    P6 -->|"republish GLIDs"| Q
-    P6 -.->|"failure alert"| GCHAT
-    SUP -->|"GET otherdetail / gethsnfromgst"| P7
-    P7 -->|"read"| D1
-    P7 -->|"read"| D3
-    P7 -->|"response"| SUP
+    OPS -->|"ACTION + fields"| P1
+    P1 --> P2
+    P2 -->|"INSERT new row / UPDATE active row"| D1
 </pre>
         </div>
       </article>
@@ -532,149 +486,99 @@ flowchart LR
       <article class="card">
         <header id="d-seq">
           <span class="ico"><i data-lucide="list-ordered"></i></span>
-          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>GST submit &amp; verify, call by call</h3></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + B</span><h3>Creating a keyword-serve record, then disabling it</h3></span>
         </header>
         <div class="explain">
-<p>The synchronous API path is short; the real work is asynchronous:</p>
+<p>A create followed by a disable:</p>
           <ol>
-            <li>The API derives PAN, runs regex + checksum, then reads <code>src_id</code> for the lock-check.</li>
-            <li><strong>alt</strong> &mdash; if already verified, the caller gets a <code>200</code> business error and nothing is written.</li>
-            <li>Otherwise the registration row is written, a message published, supplier gets <code>200 OK</code>.</li>
-            <li>The consumer runs three things in <strong>par</strong>allel: MAIN-DB update, BI verify + <code>GLUSR_GST_DETAILS</code> write, conditional RTF upsert.</li>
-            <li><strong>alt</strong> &mdash; any goroutine failure republishes to <code>USER_GST_REPROCESS</code>; on full success the outcome email is sent.</li>
+            <li>An internal tool posts <code>ACTION=INSERT</code> with the full field set; the
+              API checks the GLADMIN / WEBERP gateway and the INSERT mandatory fields, then
+              inserts a new active <code>PL_KWRD</code> row and returns its id.</li>
+            <li>Later the tool posts <code>ACTION=DISABLE</code> for the same
+              (supplier, serve-id).</li>
+            <li><strong>alt</strong> &mdash; an active row matches: its enable flag is switched
+              off. No active row matches: nothing changes, but the response is still
+              &ldquo;success&rdquo;.</li>
           </ol>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
 sequenceDiagram
     autonumber
-    actor SUP as Supplier
-    participant API as write-API<br/>UserDetailsController
-    participant MAIN as mainPg<br/>COMP_REGISTRATIONS
-    participant MQ as RabbitMQ
-    participant C as USER_GST_LAST_MODIFIED<br/>consumer
-    participant BI as BI / Govt GST API
-    participant GST as GLUSR_GST_DETAILS<br/>meshPg + trustPg
-    participant MAILC as Email
+    actor T as Internal tool
+    participant API as write-API<br/>Kwpl
+    participant DB as meshpg<br/>PL_KWRD
 
-    SUP->>API: POST /details {type: CompRgst, GST}
-    API->>API: derive PAN, regex + checksum
-    API->>GST: SELECT src_id (lock-check)
-    alt GST already Tactical / OTP verified
-        GST-->>API: src_id = 2 / 3
-        API-->>SUP: 200 business error "GST already verified"
-    else editable
-        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
-        API->>MQ: publish GST_LAST_MODIFIED
-        API-->>SUP: 200 OK (accepted)
-        MQ->>C: deliver message
-        par MAIN-DB update
-            C->>MAIN: UpdateCompRegOnMain()
-        and BI verification
-            C->>BI: CallPubServiceBI()
-            BI-->>C: turnover, nature, status flag
-            C->>GST: UPDATE verification state + src_id
-        and RTF
-            C->>C: RTF upsert (if rtf_flag = 1)
-        end
-        alt any goroutine FAILURE
-            C->>MQ: republish USER_GST_REPROCESS
-        else all success
-            C->>MAILC: SentGstMail() success / rejection
-            MAILC-->>SUP: Email notification
-        end
+    T->>API: POST /kwpl {ACTION: INSERT, supplier, city, company, keyword, dates, work-order}
+    API->>API: gateway GLADMIN / WEBERP + INSERT mandatory fields
+    API->>DB: INSERT new active PL_KWRD row RETURNING pl_kwrd_id
+    API-->>T: success + pl_kwrd_id
+
+    Note over T,DB: later - ending the placement
+    T->>API: POST /kwpl {ACTION: DISABLE, supplier, serve-id}
+    API->>DB: UPDATE enable flag off WHERE (supplier, serve-id) AND active
+    alt an active row matched
+        DB-->>API: row switched off
+    else nothing matched
+        DB-->>API: no change
     end
+    API-->>T: success (response is the same either way)
 </pre>
         </div>
       </article>
 
-      <p class="note">Source: <code>GST KT/GST_Business_Doc.md</code> &amp; <code>GST_Technical_Doc.md</code>.
-        Table and function names are as they appear in the Go source; live DB schema is not
-        cross-verified.</p>
+      <p class="note">Source: <code>KWPL KT</code> business &amp; technical docs. The name expansion is
+        inferred from a sibling reference and the <code>PL_KWRD</code> table name. Mutating
+        actions never check rows-affected, so &ldquo;success&rdquo; does not prove a record
+        changed; an unrecognised <code>ACTION</code> can still report success while doing
+        nothing; and there is no read surface for this data &mdash; all flagged in the source
+        doc.</p>
     </section>
 
     <section class="glossary" id="glossary">
       <h2>Glossary</h2>
-      <p class="intro">Business terms used above. Verification states map to the internal
-        <code>FK_GST_VERIFICATION_SRC_ID</code> code shown in brackets.</p>
+      <p class="intro">Business terms used above.</p>
       <div class="gloss-group">
-        <h3><i data-lucide="shield-check"></i> Verification states &amp; locking</h3>
+        <h3><i data-lucide="megaphone"></i> The record</h3>
         <dl>
-          <dt>Unverified / freshly submitted <span style="font-weight:400">(src&nbsp;1)</span></dt>
-          <dd>GST just entered, or auto-matched at a basic level. The supplier can still edit it freely.</dd>
-          <dt>Tactical Verified <span style="font-weight:400">(src&nbsp;2)</span></dt>
-          <dd>The system auto-matched the GST against the Government / BI database. The GST is now <em>locked</em> &mdash; only a permissioned GLADMIN or a fresh OTP re-proof can edit it.</dd>
-          <dt>OTP Verified <span style="font-weight:400">(src&nbsp;3)</span></dt>
-          <dd>The supplier proved ownership with a one-time password. Strongest lock &mdash; can override even a rejected GST.</dd>
-          <dt>Rejected <span style="font-weight:400">(src&nbsp;4)</span></dt>
-          <dd>The GST failed verification. The supplier may resubmit a corrected GST; the nightly cron also re-checks these.</dd>
-          <dt>Manual Verification <span style="font-weight:400">(src&nbsp;5)</span></dt>
-          <dd>The system could not decide automatically. A human reviewer must confirm or reject.</dd>
-          <dt>GST lock</dt>
-          <dd>The rule that a Tactical- or OTP-verified GST cannot be changed through normal profile editing &mdash; a fraud-prevention feature, not a bug.</dd>
-          <dt>OTP re-proof</dt>
-          <dd>Re-submitting a one-time password to prove GST ownership; one of two routes (the other being a permissioned GLADMIN) that unlock a locked or rejected GST.</dd>
+          <dt>KWPL / paid listing keyword</dt>
+          <dd>An internal record that a specific keyword was given paid placement for a supplier, in a city, for a validity window, against a work order.</dd>
+          <dt><code>PL_KWRD</code></dt>
+          <dd>The single table this feature writes (&ldquo;Paid-Listing KeyWoRD&rdquo;).</dd>
+          <dt>Work order id</dt>
+          <dd>The internal sales / ops transaction a keyword-serve is billed against.</dd>
+          <dt>Serve id</dt>
+          <dd>The customer-to-service identifier that, with the supplier id, locates a record for the mutating actions.</dd>
+          <dt><code>PL_KWRD_ENABLE = -1</code></dt>
+          <dd>The legacy &ldquo;active&rdquo; sentinel &mdash; not <code>1</code> or <code>true</code>. DISABLE / UPDATE / SEARCH_UPDATE only match rows in this state.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="file-text"></i> Tax &amp; identity terms</h3>
+        <h3><i data-lucide="list-ordered"></i> The actions</h3>
         <dl>
-          <dt>GSTIN / GST number</dt>
-          <dd>The 15-character Goods &amp; Services Tax Identification Number. It encodes the state code, the holder's PAN, and the entity type.</dd>
-          <dt>GSTIN checksum</dt>
-          <dd>A mathematical check digit inside the GST number, validated independently of format so typos and fabricated numbers are caught.</dd>
-          <dt>PAN</dt>
-          <dd>Permanent Account Number &mdash; the income-tax ID. It sits inside characters 3&ndash;12 of the GSTIN, so it is auto-extracted. Locked once the GST is verified.</dd>
-          <dt>CIN</dt>
-          <dd>Corporate Identification Number &mdash; the registration number for an incorporated company.</dd>
-          <dt>TAN</dt>
-          <dd>Tax Deduction and Collection Account Number.</dd>
-          <dt>IEC</dt>
-          <dd>Import Export Code. Re-checked by the nightly cron alongside GST.</dd>
-          <dt>Udyam</dt>
-          <dd>The government's MSME (micro / small / medium enterprise) registration number.</dd>
-          <dt>HSN</dt>
-          <dd>Harmonized System of Nomenclature &mdash; the tax-classification code for what a supplier sells. Linked to a GST via the HSN-mapping flow.</dd>
-          <dt>Legal Status / Company Type</dt>
-          <dd>Proprietorship, Partnership / LLP, Private Limited, HUF, Trust, etc. Derived automatically from one character of the GSTIN, so it cannot be inflated.</dd>
-          <dt>Nature of Business</dt>
-          <dd>Manufacturer, wholesaler, retailer, service provider &mdash; returned by the Government / BI verification.</dd>
-          <dt>Annual Turnover</dt>
-          <dd>The yearly-revenue band returned by the Government / BI verification.</dd>
+          <dt>INSERT</dt>
+          <dd>Create a new active keyword-serve record with the full field set; returns the new row id.</dd>
+          <dt>DISABLE</dt>
+          <dd>Switch an active record off at campaign end. An already-disabled record is left alone.</dd>
+          <dt>UPDATE</dt>
+          <dd>Revise an active record's validity-end date and work-order id, e.g. to extend a campaign.</dd>
+          <dt>SEARCH_UPDATE</dt>
+          <dd>Change only the keyword term of an active record, by row id or by (supplier, serve-id).</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="users"></i> People &amp; teams</h3>
+        <h3><i data-lucide="alert-triangle"></i> Cautions</h3>
         <dl>
-          <dt>Supplier</dt>
-          <dd>The IndiaMART seller who submits or edits the GST.</dd>
+          <dt>&ldquo;Success&rdquo; is not confirmation</dt>
+          <dd>The mutating actions never check how many rows were affected, so a typo'd supplier / serve-id, or an already-disabled record, still returns success.</dd>
+          <dt>Internal only</dt>
+          <dd>Gateways are limited to GLADMIN and WEBERP; suppliers neither call nor see this.</dd>
+          <dt>No side effects</dt>
+          <dd>No queue, consumer, cron, email or notification is attached &mdash; it is a pure record-keeping write.</dd>
+          <dt>No read API</dt>
+          <dd>How this data is consumed (a report, a dashboard, direct DB access) is not visible in the codebase.</dd>
           <dt>GLID</dt>
-          <dd>GlobalID &mdash; the unique internal identifier for one user / company account.</dd>
-          <dt>GLADMIN</dt>
-          <dd>An internal admin user. With an explicit screen permission, can override a locked GST.</dd>
-          <dt>BI GST Team</dt>
-          <dd>IndiaMART's Business Intelligence team that runs the system cross-verifying GSTs against the government database.</dd>
-          <dt>Government GST Verification System</dt>
-          <dd>The external, government-backed system that confirms GST validity and returns turnover, nature of business, and registration year.</dd>
-        </dl>
-      </div>
-      <div class="gloss-group">
-        <h3><i data-lucide="workflow"></i> Systems &amp; processes</h3>
-        <dl>
-          <dt>Trust status / trust badge</dt>
-          <dd>The buyer-facing signal that a supplier is a real, tax-registered business. Improves once the GST is verified &mdash; separate from star ratings.</dd>
-          <dt>TACT re-verification cron</dt>
-          <dd>The nightly job that re-checks GSTs (and PAN / CIN / IEC / Udyam) changed in the last 24 hours, plus previously-rejected ones. Sends no supplier email.</dd>
-          <dt>Consumer</dt>
-          <dd>A background worker that processes queued messages asynchronously, after the API has already responded.</dd>
-          <dt>Fan-out</dt>
-          <dd>Propagating one GST change to every database that keeps a copy &mdash; registration record, verification record, and its trust-DB replica.</dd>
-          <dt>Reprocess / retry queue</dt>
-          <dd>Where a partially-failed GST update is re-queued so the change eventually lands in every database.</dd>
-          <dt>RTF (Real Time Feed)</dt>
-          <dd>A generic internal framework for pushing live data updates; reused conditionally by the GST flow.</dd>
-          <dt>Audit trail</dt>
-          <dd>A record of who changed what and when &mdash; written for every HSN mapping add or remove.</dd>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier.</dd>
         </dl>
       </div>
     </section>

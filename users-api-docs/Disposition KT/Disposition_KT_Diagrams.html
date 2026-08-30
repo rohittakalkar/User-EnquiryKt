@@ -1,6 +1,6 @@
 <meta charset="utf-8" />
-<title>GST &mdash; KT Diagrams</title>
-<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API GST feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<title>Disposition &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Disposition feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
@@ -330,14 +330,14 @@
 <div class="shell">
   <aside class="rail">
     <p class="mark">IndiaMART &middot; Users-API KT</p>
-    <p class="mark-title">GST</p>
+    <p class="mark-title">Disposition</p>
     <nav>
       <ul>
         <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
-        <li><a href="#feature"><i data-lucide="shield-check"></i> GST</a></li>
+        <li><a href="#feature"><i data-lucide="clipboard-list"></i> Disposition</a></li>
         <li><a href="#d-biz" class="sub">Business flowchart</a></li>
         <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
-        <li><a href="#d-seq" class="sub">Sequence &mdash; submit &amp; verify</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; list, record, read</a></li>
         <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
       </ul>
     </nav>
@@ -346,11 +346,11 @@
   <main>
     <p class="topbar">Knowledge Transfer &middot; Engineering</p>
 
-    <h1>GST &mdash; Goods &amp; Services Tax</h1>
-    <p class="lede">When a supplier submits or edits a GST number, a full verification process runs behind
-      one text field: format &amp; checksum checks, a lock on already-verified GSTs, an external
-      Government / BI verification call, automatic PAN and legal-status derivation, a nightly
-      re-verification cron, and a separate GST&nbsp;&harr;&nbsp;HSN tax-classification mapping flow.</p>
+    <h1>Disposition</h1>
+    <p class="lede">A disposition is an outcome / reason code. When an internal review or verification step
+      finishes, its result is picked from a per-attribute master list and saved against the
+      supplier &mdash; insert-only, so the full history is kept. The master list is generic across
+      attributes; reading the history back currently works only for the GST attribute.</p>
 
     <section class="legend" id="legend">
       <h2>How to read these diagrams</h2>
@@ -387,26 +387,25 @@
     </section>
 
     <section class="feature" id="feature">
-      <p class="kicker"><i data-lucide="shield-check"></i> Trust &amp; Compliance</p>
-      <h2>GST &mdash; Goods &amp; Services Tax</h2>
-      <p>GST is a <code>Type=CompRgst</code> branch of the shared user-details write endpoint.
-      The five business flows (A&ndash;E) are: first submit, locked-GST reject, daily TACT re-verify
-      cron, GST&nbsp;&harr;&nbsp;HSN mapping, and legal-status auto-computation.</p>
+      <p class="kicker"><i data-lucide="clipboard-list"></i> Verification tooling</p>
+      <h2>Disposition</h2>
+      <p>Three flows. <strong>Flow&nbsp;B</strong> &mdash; fetch the master list of enabled dispositions
+      (any attribute) to populate a dropdown. <strong>Flow&nbsp;A</strong> &mdash; an internal tool
+      records a chosen disposition as a new row in <code>GLUSR_DISPOSITIONS</code>.
+      <strong>Flow&nbsp;C</strong> &mdash; read a supplier's disposition history, gated to GST only.
+      No queue, consumer, cron or cache anywhere.</p>
 
       <article class="card">
         <header id="d-biz">
           <span class="ico"><i data-lucide="git-branch"></i></span>
-          <span><span class="dtype">Business flowchart</span><h3>What happens when a GST is submitted</h3></span>
+          <span><span class="dtype">Business flowchart</span><h3>Recording an outcome code against a supplier</h3></span>
         </header>
         <div class="explain">
-<p>Read top-down. The main path is a supplier edit; two self-contained
-          sub-flows hang off it with dotted links:</p>
+<p>The three flows are usually used in order:</p>
           <ol>
-            <li><strong>Format gate</strong> &mdash; 15 characters and a valid GSTIN checksum, else rejected.</li>
-            <li><strong>Lock gate</strong> &mdash; a <em>Tactical</em> or <em>OTP verified</em> GST is blocked for a normal supplier; only a permissioned GLADMIN or fresh OTP re-proof passes.</li>
-            <li><strong>Save &amp; verify</strong> &mdash; record saved, PAN auto-extracted, background check against the Government GST database.</li>
-            <li><strong>Outcome</strong> &mdash; pass &rArr; Tactical Verified + legal status + success email; needs-review &rArr; manual queue; fail &rArr; rejected.</li>
-            <li><strong>Nightly cron</strong> re-checks recently-changed and rejected GSTs silently. <strong>HSN mapping</strong> is admin-only.</li>
+            <li><strong>List</strong> &mdash; the tool fetches every <em>enabled</em> disposition, each with its attribute's display name. Open to any caller.</li>
+            <li><strong>Record</strong> &mdash; a tool on the allowlist (GLADMIN, SELLERMY, IMOB, MSITE) submits the chosen <code>MASTER_ID</code> against a GLID. The write is a blind <code>INSERT</code> &mdash; no check that the master ID matches the attribute name.</li>
+            <li><strong>Read back</strong> &mdash; if the attribute is <code>GST</code>, return the full history (<code>all=1</code>) or just the latest entry; any other attribute returns <em>no data</em>.</li>
           </ol>
         </div>
         <div class="diagram-wrap">
@@ -415,42 +414,25 @@ flowchart TD
     classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
     classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
-    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
     classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
 
-    A["Supplier submits / edits GST<br/>seller panel or app"]:::actor
-    B{"Valid format?<br/>15 chars + checksum"}:::decision
-    A --> B
-    B -- No --> R1["Reject: invalid GST"]:::terminal
-    B -- Yes --> C{"Existing GST already<br/>Tactical / OTP verified?"}:::decision
-    C -- "Yes, normal supplier" --> R2["Reject: GST locked<br/>fraud-prevention"]:::terminal
-    C -- "Yes, GLADMIN w/ permission<br/>or OTP re-proof" --> D
-    C -- No --> D["Save GST record<br/>auto-extract PAN"]:::system
-    D --> E["Background: verify against<br/>Govt GST database"]:::external
-    E --> F{"Verification outcome"}:::decision
-    F -- Pass --> G["GST = Tactical Verified<br/>trust status updated"]:::system
-    F -- Needs review --> H["Manual verification queue"]:::system
-    F -- Fail --> I["GST Rejected<br/>supplier can resubmit"]:::terminal
-    G --> J["Auto-derive Legal Status<br/>from GSTIN"]:::system
-    G --> K["Email: GST updated successfully"]:::system
-    I --> K2["Email: GST rejection notice"]:::system
-    G -.->|"later, nightly re-check"| L
-    I -.->|"rejected GSTs re-checked too"| L
-    G -.->|"separate admin flow"| Q
+    L["Internal tool opens a<br/>disposition dropdown"]:::actor
+    L --> LM["Fetch master list:<br/>enabled dispositions, any attribute"]:::system
+    LM --> PICK["User picks a disposition code"]:::actor
+    PICK --> G{"Caller on write allowlist?<br/>GLADMIN / SELLERMY / IMOB / MSITE"}:::decision
+    G -- No --> RJ["Reject: unauthorised"]:::terminal
+    G -- Yes --> VAL{"Mandatory + length<br/>validation passes?"}:::decision
+    VAL -- No --> RJ2["Reject with field error"]:::terminal
+    VAL -- Yes --> INS["Blind INSERT into GLUSR_DISPOSITIONS<br/>new history row, timestamped"]:::system
+    INS --> DONE["Recorded &mdash; previous rows kept"]:::terminal
 
-    subgraph BG ["Daily automated re-verification (no email)"]
+    subgraph RB ["Read back history"]
         direction TB
-        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["Re-verify via Govt DB"]:::external
-        M --> N{"Result"}:::decision
-        N -- "Now valid" --> O["Auto-mark verified"]:::system
-        N -- "Failed" --> P["Alert internal team (Google Chat)"]:::system
-    end
-
-    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
-        direction TB
-        Q["Internal team links HSN codes to a GST"]:::actor --> S["Dedupe + save mapping"]:::system
-        S --> T["Audit trail recorded"]:::system
-        S --> U["Notify every supplier account on that GST"]:::system
+        R["Caller requests disposition history"]:::actor --> RQ{"Attribute = GST?"}:::decision
+        RQ -- No --> ND["Return NO_DATA_FOUND"]:::terminal
+        RQ -- Yes --> RA{"all = 1?"}:::decision
+        RA -- Yes --> RF["Return full history"]:::terminal
+        RA -- No --> RL["Return latest entry only"]:::terminal
     end
 </pre>
         </div>
@@ -459,16 +441,14 @@ flowchart TD
       <article class="card">
         <header id="d-dfd">
           <span class="ico"><i data-lucide="share-2"></i></span>
-          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where GST data moves across processes and stores</h3></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where disposition data is written and read</h3></span>
         </header>
         <div class="explain">
-<p>Seven processes cover every flow (A&ndash;E):</p>
+<p>All three processes are single round-trips:</p>
           <ul>
-            <li><strong>1.0 Validate &amp; save</strong> reads the lock state from <code>D2</code>, writes the registration record to <code>D1</code>, publishes the change.</li>
-            <li><strong>2.0 Verify</strong> (async consumer) calls the Govt/BI API, writes verification state to <code>D2</code>, triggers the email.</li>
-            <li><strong>3.0 Fan-out</strong> keeps <code>D1</code> and the <code>D2</code> replicas in sync; <strong>4.0</strong> derives legal status.</li>
-            <li><strong>5.0 HSN mapping</strong> upserts <code>D3</code>, writes an audit row to <code>D4</code>, notifies accounts.</li>
-            <li><strong>6.0 Nightly cron</strong> scans the BigQuery mirrors (<code>D5</code>), republishes GLIDs, alerts Google Chat. <strong>7.0</strong> serves reads.</li>
+            <li><strong>1.0 Read master list</strong> joins <code>D2</code> and <code>D3</code>, returning every enabled disposition and its attribute name &mdash; no attribute filter, no gateway.</li>
+            <li><strong>2.0 Record disposition</strong> validates the allowlist, mandatory and length rules, then inserts one row into <code>D1</code>.</li>
+            <li><strong>3.0 Read attribute history</strong> short-circuits to &ldquo;no data&rdquo; unless the attribute is GST, then reads <code>D1</code> joined to <code>D2</code>.</li>
           </ul>
         </div>
         <div class="diagram-wrap">
@@ -478,53 +458,27 @@ flowchart LR
     classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
 
-    SUP["Supplier<br/>seller panel / app"]:::ext
-    ADM["GLADMIN / BI team"]:::ext
-    BI["Govt / BI GST<br/>Verification API"]:::ext
-    MAIL["Email / Notification"]:::ext
-    GCHAT["Google Chat alerts"]:::ext
+    TOOL["Internal tool<br/>(GLADMIN / SELLERMY / IMOB / MSITE)"]:::ext
+    SCREEN["Admin screen / dropdown"]:::ext
 
-    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
-    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
-    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
-    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
-    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
-    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
-    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+    P1(("1.0<br/>Read master<br/>list")):::proc
+    P2(("2.0<br/>Record<br/>disposition")):::proc
+    P3(("3.0<br/>Read attribute<br/>history (GST)")):::proc
 
-    D1[("D1 GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
-    D2[("D2 GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
-    D3[("D3 GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
-    D4[("D4 GL_ALL_MASTER_HISTORY (audit)")]:::store
-    D5[("D5 BigQuery history mirrors")]:::store
-    Q[["RabbitMQ queues"]]:::store
+    D1[("D1 GLUSR_DISPOSITIONS<br/>meshpg (insert-only)")]:::store
+    D2[("D2 GL_DISPOSITIONS_MASTER")]:::store
+    D3[("D3 GL_ATTRIBUTE")]:::store
 
-    SUP -->|"GST, PAN input"| P1
-    P1 -->|"lock-check read"| D2
-    P1 -->|"write registration"| D1
-    P1 -->|"publish change"| Q
-    Q --> P2
-    Q --> P3
-    Q --> P4
-    P2 -->|"verify request"| BI
-    BI -->|"turnover, nature, status"| P2
-    P2 -->|"verify state"| D2
-    P2 -->|"success / reject"| MAIL
-    P3 -->|"sync GST/PAN/CIN"| D1
-    P3 -->|"replica sync"| D2
-    P4 -->|"read GST"| D1
-    P4 -->|"legal status code"| D2
-    ADM -->|"INS_HSN / DEL_HSN"| P5
-    P5 -->|"upsert links"| D3
-    P5 -->|"audit row"| D4
-    P5 -->|"notify accounts"| Q
-    P6 -->|"scan changes"| D5
-    P6 -->|"republish GLIDs"| Q
-    P6 -.->|"failure alert"| GCHAT
-    SUP -->|"GET otherdetail / gethsnfromgst"| P7
-    P7 -->|"read"| D1
-    P7 -->|"read"| D3
-    P7 -->|"response"| SUP
+    SCREEN -->|"detail_from = Disposition"| P1
+    P1 -->|"enabled rows"| D2
+    P1 -->|"attribute display name"| D3
+    P1 -->|"code + attribute list"| SCREEN
+    TOOL -->|"GLID, MASTER_ID, ATTRIBUTE_NAME, DISPOSITION"| P2
+    P2 -->|"INSERT (FK_GL_DISPOSITION_MASTER_ID, MODID)"| D1
+    TOOL -->|"glid, attribute_name, all"| P3
+    P3 -->|"history rows (GST only)"| D1
+    P3 -->|"resolve master + attribute"| D2
+    P3 -->|"history / latest"| TOOL
 </pre>
         </div>
       </article>
@@ -532,149 +486,90 @@ flowchart LR
       <article class="card">
         <header id="d-seq">
           <span class="ico"><i data-lucide="list-ordered"></i></span>
-          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>GST submit &amp; verify, call by call</h3></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows B / A / C</span><h3>List, record, and read back a disposition</h3></span>
         </header>
         <div class="explain">
-<p>The synchronous API path is short; the real work is asynchronous:</p>
+<p>List &rarr; record &rarr; read, across three endpoints that share no orchestration code:</p>
           <ol>
-            <li>The API derives PAN, runs regex + checksum, then reads <code>src_id</code> for the lock-check.</li>
-            <li><strong>alt</strong> &mdash; if already verified, the caller gets a <code>200</code> business error and nothing is written.</li>
-            <li>Otherwise the registration row is written, a message published, supplier gets <code>200 OK</code>.</li>
-            <li>The consumer runs three things in <strong>par</strong>allel: MAIN-DB update, BI verify + <code>GLUSR_GST_DETAILS</code> write, conditional RTF upsert.</li>
-            <li><strong>alt</strong> &mdash; any goroutine failure republishes to <code>USER_GST_REPROCESS</code>; on full success the outcome email is sent.</li>
+            <li>The tool reads the master list and shows the disposition text; the user picks one.</li>
+            <li>The tool submits the matching <code>MASTER_ID</code>; the write API validates and inserts a new history row with no cross-check.</li>
+            <li><strong>alt</strong> &mdash; a history read for a non-GST attribute returns <code>NO_DATA_FOUND</code> before any query; for GST it returns all rows or just the latest.</li>
           </ol>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
 sequenceDiagram
     autonumber
-    actor SUP as Supplier
-    participant API as write-API<br/>UserDetailsController
-    participant MAIN as mainPg<br/>COMP_REGISTRATIONS
-    participant MQ as RabbitMQ
-    participant C as USER_GST_LAST_MODIFIED<br/>consumer
-    participant BI as BI / Govt GST API
-    participant GST as GLUSR_GST_DETAILS<br/>meshPg + trustPg
-    participant MAILC as Email
+    actor T as Internal tool
+    participant M as read-API<br/>glmaster/detail
+    participant W as write-API<br/>UserDisposition
+    participant H as read-API<br/>AttrDisposition
+    participant DB as Postgres
 
-    SUP->>API: POST /details {type: CompRgst, GST}
-    API->>API: derive PAN, regex + checksum
-    API->>GST: SELECT src_id (lock-check)
-    alt GST already Tactical / OTP verified
-        GST-->>API: src_id = 2 / 3
-        API-->>SUP: 200 business error "GST already verified"
-    else editable
-        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
-        API->>MQ: publish GST_LAST_MODIFIED
-        API-->>SUP: 200 OK (accepted)
-        MQ->>C: deliver message
-        par MAIN-DB update
-            C->>MAIN: UpdateCompRegOnMain()
-        and BI verification
-            C->>BI: CallPubServiceBI()
-            BI-->>C: turnover, nature, status flag
-            C->>GST: UPDATE verification state + src_id
-        and RTF
-            C->>C: RTF upsert (if rtf_flag = 1)
-        end
-        alt any goroutine FAILURE
-            C->>MQ: republish USER_GST_REPROCESS
-        else all success
-            C->>MAILC: SentGstMail() success / rejection
-            MAILC-->>SUP: Email notification
-        end
+    T->>M: GET /glmaster/detail {detail_from: Disposition}
+    M->>DB: SELECT enabled dispositions JOIN GL_ATTRIBUTE
+    DB-->>M: rows (code, attribute display name)
+    M-->>T: master list for the dropdown
+    T->>W: POST /user/dispositon {GLID, MASTER_ID, ATTRIBUTE_NAME, DISPOSITION}
+    W->>W: allowlist + mandatory + length validation
+    W->>DB: INSERT INTO GLUSR_DISPOSITIONS (no MASTER_ID / attribute cross-check)
+    DB-->>W: inserted
+    W-->>T: success
+    T->>H: read history {glid, attribute_name, all}
+    alt attribute_name != GST
+        H-->>T: NO_DATA_FOUND
+    else GST
+        H->>DB: SELECT history (all rows, or latest by add_date)
+        DB-->>T: disposition history
     end
 </pre>
         </div>
       </article>
 
-      <p class="note">Source: <code>GST KT/GST_Business_Doc.md</code> &amp; <code>GST_Technical_Doc.md</code>.
-        Table and function names are as they appear in the Go source; live DB schema is not
-        cross-verified.</p>
+      <p class="note">Source: <code>Disposition KT</code> business &amp; technical docs. Purely synchronous,
+        DB-only &mdash; no queue, consumer, cron or cache. &ldquo;Disposition&rdquo; is an overloaded
+        word in the codebase (Supplier Rating and Supplier Verification Log use it for unrelated
+        things). The live route path <code>/user/dispositon</code> is misspelled but in production.</p>
     </section>
 
     <section class="glossary" id="glossary">
       <h2>Glossary</h2>
-      <p class="intro">Business terms used above. Verification states map to the internal
-        <code>FK_GST_VERIFICATION_SRC_ID</code> code shown in brackets.</p>
+      <p class="intro">Business terms used above.</p>
       <div class="gloss-group">
-        <h3><i data-lucide="shield-check"></i> Verification states &amp; locking</h3>
+        <h3><i data-lucide="clipboard-list"></i> The disposition model</h3>
         <dl>
-          <dt>Unverified / freshly submitted <span style="font-weight:400">(src&nbsp;1)</span></dt>
-          <dd>GST just entered, or auto-matched at a basic level. The supplier can still edit it freely.</dd>
-          <dt>Tactical Verified <span style="font-weight:400">(src&nbsp;2)</span></dt>
-          <dd>The system auto-matched the GST against the Government / BI database. The GST is now <em>locked</em> &mdash; only a permissioned GLADMIN or a fresh OTP re-proof can edit it.</dd>
-          <dt>OTP Verified <span style="font-weight:400">(src&nbsp;3)</span></dt>
-          <dd>The supplier proved ownership with a one-time password. Strongest lock &mdash; can override even a rejected GST.</dd>
-          <dt>Rejected <span style="font-weight:400">(src&nbsp;4)</span></dt>
-          <dd>The GST failed verification. The supplier may resubmit a corrected GST; the nightly cron also re-checks these.</dd>
-          <dt>Manual Verification <span style="font-weight:400">(src&nbsp;5)</span></dt>
-          <dd>The system could not decide automatically. A human reviewer must confirm or reject.</dd>
-          <dt>GST lock</dt>
-          <dd>The rule that a Tactical- or OTP-verified GST cannot be changed through normal profile editing &mdash; a fraud-prevention feature, not a bug.</dd>
-          <dt>OTP re-proof</dt>
-          <dd>Re-submitting a one-time password to prove GST ownership; one of two routes (the other being a permissioned GLADMIN) that unlock a locked or rejected GST.</dd>
+          <dt>Disposition</dt>
+          <dd>An outcome / reason code recorded against a supplier when an internal review or verification step finishes.</dd>
+          <dt>Disposition master list</dt>
+          <dd>The curated set of valid disposition codes, each tied to one attribute. Only <em>enabled</em> entries appear in dropdowns.</dd>
+          <dt>Attribute</dt>
+          <dd>What the disposition is about &mdash; e.g. GST. The master list is multi-attribute by design.</dd>
+          <dt>MASTER_ID</dt>
+          <dd>The ID of the chosen row in the disposition master list. This is what actually gets stored on the supplier's record.</dd>
+          <dt>MODID</dt>
+          <dd>The identity of the tool / system that recorded the disposition, stored for the audit trail.</dd>
+          <dt>Insert-only / history-preserving</dt>
+          <dd>Every submission creates a new row; nothing is overwritten, so the full outcome history per supplier is kept.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="file-text"></i> Tax &amp; identity terms</h3>
+        <h3><i data-lucide="history"></i> Reading it back</h3>
         <dl>
-          <dt>GSTIN / GST number</dt>
-          <dd>The 15-character Goods &amp; Services Tax Identification Number. It encodes the state code, the holder's PAN, and the entity type.</dd>
-          <dt>GSTIN checksum</dt>
-          <dd>A mathematical check digit inside the GST number, validated independently of format so typos and fabricated numbers are caught.</dd>
-          <dt>PAN</dt>
-          <dd>Permanent Account Number &mdash; the income-tax ID. It sits inside characters 3&ndash;12 of the GSTIN, so it is auto-extracted. Locked once the GST is verified.</dd>
-          <dt>CIN</dt>
-          <dd>Corporate Identification Number &mdash; the registration number for an incorporated company.</dd>
-          <dt>TAN</dt>
-          <dd>Tax Deduction and Collection Account Number.</dd>
-          <dt>IEC</dt>
-          <dd>Import Export Code. Re-checked by the nightly cron alongside GST.</dd>
-          <dt>Udyam</dt>
-          <dd>The government's MSME (micro / small / medium enterprise) registration number.</dd>
-          <dt>HSN</dt>
-          <dd>Harmonized System of Nomenclature &mdash; the tax-classification code for what a supplier sells. Linked to a GST via the HSN-mapping flow.</dd>
-          <dt>Legal Status / Company Type</dt>
-          <dd>Proprietorship, Partnership / LLP, Private Limited, HUF, Trust, etc. Derived automatically from one character of the GSTIN, so it cannot be inflated.</dd>
-          <dt>Nature of Business</dt>
-          <dd>Manufacturer, wholesaler, retailer, service provider &mdash; returned by the Government / BI verification.</dd>
-          <dt>Annual Turnover</dt>
-          <dd>The yearly-revenue band returned by the Government / BI verification.</dd>
+          <dt>Attribute-history read (GST only)</dt>
+          <dd>The endpoint that returns a supplier's disposition history. It short-circuits to &ldquo;no data&rdquo; for any attribute other than GST, even though the master list is generic.</dd>
+          <dt><code>all</code> flag</dt>
+          <dd>On the history read: <code>all=1</code> returns every row; anything else returns only the latest disposition.</dd>
+          <dt><code>ENABLED = -1</code></dt>
+          <dd>This codebase's convention for &ldquo;true / enabled&rdquo;. A disposition with any other value is hidden from the dropdown without being deleted.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="users"></i> People &amp; teams</h3>
+        <h3><i data-lucide="users"></i> Access</h3>
         <dl>
-          <dt>Supplier</dt>
-          <dd>The IndiaMART seller who submits or edits the GST.</dd>
           <dt>GLID</dt>
-          <dd>GlobalID &mdash; the unique internal identifier for one user / company account.</dd>
-          <dt>GLADMIN</dt>
-          <dd>An internal admin user. With an explicit screen permission, can override a locked GST.</dd>
-          <dt>BI GST Team</dt>
-          <dd>IndiaMART's Business Intelligence team that runs the system cross-verifying GSTs against the government database.</dd>
-          <dt>Government GST Verification System</dt>
-          <dd>The external, government-backed system that confirms GST validity and returns turnover, nature of business, and registration year.</dd>
-        </dl>
-      </div>
-      <div class="gloss-group">
-        <h3><i data-lucide="workflow"></i> Systems &amp; processes</h3>
-        <dl>
-          <dt>Trust status / trust badge</dt>
-          <dd>The buyer-facing signal that a supplier is a real, tax-registered business. Improves once the GST is verified &mdash; separate from star ratings.</dd>
-          <dt>TACT re-verification cron</dt>
-          <dd>The nightly job that re-checks GSTs (and PAN / CIN / IEC / Udyam) changed in the last 24 hours, plus previously-rejected ones. Sends no supplier email.</dd>
-          <dt>Consumer</dt>
-          <dd>A background worker that processes queued messages asynchronously, after the API has already responded.</dd>
-          <dt>Fan-out</dt>
-          <dd>Propagating one GST change to every database that keeps a copy &mdash; registration record, verification record, and its trust-DB replica.</dd>
-          <dt>Reprocess / retry queue</dt>
-          <dd>Where a partially-failed GST update is re-queued so the change eventually lands in every database.</dd>
-          <dt>RTF (Real Time Feed)</dt>
-          <dd>A generic internal framework for pushing live data updates; reused conditionally by the GST flow.</dd>
-          <dt>Audit trail</dt>
-          <dd>A record of who changed what and when &mdash; written for every HSN mapping add or remove.</dd>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier the disposition is recorded against.</dd>
+          <dt>Write allowlist</dt>
+          <dd>Only GLADMIN, SELLERMY, IMOB and MSITE may record a disposition. Reading the master list has no allowlist at all.</dd>
         </dl>
       </div>
     </section>

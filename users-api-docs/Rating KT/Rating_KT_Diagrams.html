@@ -1,6 +1,6 @@
 <meta charset="utf-8" />
-<title>GST &mdash; KT Diagrams</title>
-<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API GST feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<title>Supplier Rating &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Supplier Rating feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
@@ -330,14 +330,14 @@
 <div class="shell">
   <aside class="rail">
     <p class="mark">IndiaMART &middot; Users-API KT</p>
-    <p class="mark-title">GST</p>
+    <p class="mark-title">Supplier Rating</p>
     <nav>
       <ul>
         <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
-        <li><a href="#feature"><i data-lucide="shield-check"></i> GST</a></li>
+        <li><a href="#feature"><i data-lucide="star"></i> Supplier Rating</a></li>
         <li><a href="#d-biz" class="sub">Business flowchart</a></li>
         <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
-        <li><a href="#d-seq" class="sub">Sequence &mdash; submit &amp; verify</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; submit a rating</a></li>
         <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
       </ul>
     </nav>
@@ -346,11 +346,13 @@
   <main>
     <p class="topbar">Knowledge Transfer &middot; Engineering</p>
 
-    <h1>GST &mdash; Goods &amp; Services Tax</h1>
-    <p class="lede">When a supplier submits or edits a GST number, a full verification process runs behind
-      one text field: format &amp; checksum checks, a lock on already-verified GSTs, an external
-      Government / BI verification call, automatic PAN and legal-status derivation, a nightly
-      re-verification cron, and a separate GST&nbsp;&harr;&nbsp;HSN tax-classification mapping flow.</p>
+    <h1>Supplier Rating</h1>
+    <p class="lede">A buyer's 1&ndash;5 star + comment + thumbs on Response / Quality / Delivery + optional
+      photos, against a supplier. Submit is instant, but the rating lands <em>hidden</em>; a
+      topic-exchange fan-out then triggers roughly six background consumers (moderation,
+      matchmaking check, enrichment, aggregate, notification, LMS sync) plus a Kafka seller-risk
+      signal. A daily fraud / suspect cron re-scans still-pending ratings for rings. Only the
+      latest rating per buyer-supplier pair stays live.</p>
 
     <section class="legend" id="legend">
       <h2>How to read these diagrams</h2>
@@ -387,27 +389,29 @@
     </section>
 
     <section class="feature" id="feature">
-      <p class="kicker"><i data-lucide="shield-check"></i> Trust &amp; Compliance</p>
-      <h2>GST &mdash; Goods &amp; Services Tax</h2>
-      <p>GST is a <code>Type=CompRgst</code> branch of the shared user-details write endpoint.
-      The five business flows (A&ndash;E) are: first submit, locked-GST reject, daily TACT re-verify
-      cron, GST&nbsp;&harr;&nbsp;HSN mapping, and legal-status auto-computation.</p>
+      <p class="kicker"><i data-lucide="star"></i> Ratings &amp; Reviews</p>
+      <h2>Supplier Rating</h2>
+      <p>Display status starts at <code>-2</code> (hidden). The matchmaking consumer sets
+      <code>-1</code> when no genuine connection is found; the suspect cron sets
+      <code>-1</code> / <code>0</code> by fraud flag. Every admin / system review &mdash;
+      matchmaking, cron or GLADMIN &mdash; goes through the same <code>IS_ADMIN</code> write
+      path, which always re-triggers the aggregate recompute.</p>
 
       <article class="card">
         <header id="d-biz">
           <span class="ico"><i data-lucide="git-branch"></i></span>
-          <span><span class="dtype">Business flowchart</span><h3>What happens when a GST is submitted</h3></span>
+          <span><span class="dtype">Business flowchart</span><h3>Instant submit, a heavily-checked publish</h3></span>
         </header>
         <div class="explain">
-<p>Read top-down. The main path is a supplier edit; two self-contained
-          sub-flows hang off it with dotted links:</p>
+<p>The main path is a submit; almost all the work is async:</p>
           <ol>
-            <li><strong>Format gate</strong> &mdash; 15 characters and a valid GSTIN checksum, else rejected.</li>
-            <li><strong>Lock gate</strong> &mdash; a <em>Tactical</em> or <em>OTP verified</em> GST is blocked for a normal supplier; only a permissioned GLADMIN or fresh OTP re-proof passes.</li>
-            <li><strong>Save &amp; verify</strong> &mdash; record saved, PAN auto-extracted, background check against the Government GST database.</li>
-            <li><strong>Outcome</strong> &mdash; pass &rArr; Tactical Verified + legal status + success email; needs-review &rArr; manual queue; fail &rArr; rejected.</li>
-            <li><strong>Nightly cron</strong> re-checks recently-changed and rejected GSTs silently. <strong>HSN mapping</strong> is admin-only.</li>
+            <li>The buyer submits stars, comment, thumbs and photos. The API checks 1&ndash;5, buyer &ne; supplier, and the gateway.</li>
+            <li>An existing-relationship check marks the rating new or an update, then <code>GLUSR_RATING</code> is inserted at display status <code>-2</code> (hidden), with detail and photo rows.</li>
+            <li><code>SUPPLIER_FEEDBACK</code> is published to a topic exchange; the buyer sees &ldquo;done&rdquo; immediately.</li>
+            <li>The fan-out runs in parallel: a CBS + PII + ML moderation cascade; a matchmaking check that hides the rating (<code>-1</code>) if no genuine connection; category enrichment; an aggregate recompute; a push notification; and two LMS sync paths. A Kafka signal feeds seller-risk scoring for fresh inserts.</li>
+            <li>Over the next day or two the suspect cron re-scans pending ratings, runs a ring check via a fraud-graph API, and writes any verdict back through the <code>IS_ADMIN</code> path.</li>
           </ol>
+          <p>A supplier reply re-runs moderation on the reply text; archival keeps only the latest rating per pair.</p>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
@@ -418,39 +422,28 @@ flowchart TD
     classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
     classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
 
-    A["Supplier submits / edits GST<br/>seller panel or app"]:::actor
-    B{"Valid format?<br/>15 chars + checksum"}:::decision
-    A --> B
-    B -- No --> R1["Reject: invalid GST"]:::terminal
-    B -- Yes --> C{"Existing GST already<br/>Tactical / OTP verified?"}:::decision
-    C -- "Yes, normal supplier" --> R2["Reject: GST locked<br/>fraud-prevention"]:::terminal
-    C -- "Yes, GLADMIN w/ permission<br/>or OTP re-proof" --> D
-    C -- No --> D["Save GST record<br/>auto-extract PAN"]:::system
-    D --> E["Background: verify against<br/>Govt GST database"]:::external
-    E --> F{"Verification outcome"}:::decision
-    F -- Pass --> G["GST = Tactical Verified<br/>trust status updated"]:::system
-    F -- Needs review --> H["Manual verification queue"]:::system
-    F -- Fail --> I["GST Rejected<br/>supplier can resubmit"]:::terminal
-    G --> J["Auto-derive Legal Status<br/>from GSTIN"]:::system
-    G --> K["Email: GST updated successfully"]:::system
-    I --> K2["Email: GST rejection notice"]:::system
-    G -.->|"later, nightly re-check"| L
-    I -.->|"rejected GSTs re-checked too"| L
-    G -.->|"separate admin flow"| Q
+    A["Buyer submits stars + comment<br/>+ thumbs + photos"]:::actor --> V{"Valid?<br/>1-5, buyer != supplier, gateway"}:::decision
+    V -- No --> RJ["Reject"]:::terminal
+    V -- Yes --> N["Existing-relationship check (new vs update)"]:::system
+    N --> INS["INSERT GLUSR_RATING, display status -2 (hidden)<br/>+ detail + photo rows"]:::system
+    INS --> PUB["Publish SUPPLIER_FEEDBACK (topic fan-out)"]:::system
+    PUB --> DONE["Buyer sees 'done' immediately"]:::terminal
 
-    subgraph BG ["Daily automated re-verification (no email)"]
-        direction TB
-        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["Re-verify via Govt DB"]:::external
-        M --> N{"Result"}:::decision
-        N -- "Now valid" --> O["Auto-mark verified"]:::system
-        N -- "Failed" --> P["Alert internal team (Google Chat)"]:::system
-    end
+    PUB --> M["Moderation cascade: CBS + PII + ML<br/>&rarr; hide on flag"]:::external
+    PUB --> MM{"Genuine buyer-supplier connection?<br/>(contact-book)"}:::decision
+    MM -- No --> HID["Set display status -1 (hidden)"]:::system
+    MM -- Yes --> ENR["Category enrichment"]:::system
+    PUB --> AGG["Aggregate recompute + rating log"]:::system
+    PUB --> NOT["Push notification to supplier"]:::system
+    PUB --> LMS["LMS sync (sharded 0-4)"]:::system
+    PUB --> RISK["Kafka seller-risk signal (fresh inserts only)"]:::external
 
-    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
+    subgraph CR ["Daily suspect / fraud cron"]
         direction TB
-        Q["Internal team links HSN codes to a GST"]:::actor --> S["Dedupe + save mapping"]:::system
-        S --> T["Audit trail recorded"]:::system
-        S --> U["Notify every supplier account on that GST"]:::system
+        C1["Scan pending ratings (last 2 days)"]:::system --> C2["fn_get_rating_suspect_flag<br/>+ ring check via fraud-graph API"]:::external
+        C2 --> C3{"Suspect?"}:::decision
+        C3 -- Yes --> C4["Write back display status -1<br/>via IS_ADMIN path &rarr; aggregate refresh"]:::system
+        C3 -- No --> C5["Left visible"]:::terminal
     end
 </pre>
         </div>
@@ -459,16 +452,15 @@ flowchart TD
       <article class="card">
         <header id="d-dfd">
           <span class="ico"><i data-lucide="share-2"></i></span>
-          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where GST data moves across processes and stores</h3></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where a rating flows across ~9 background processes</h3></span>
         </header>
         <div class="explain">
-<p>Seven processes cover every flow (A&ndash;E):</p>
+<p>One write, a wide fan-out:</p>
           <ul>
-            <li><strong>1.0 Validate &amp; save</strong> reads the lock state from <code>D2</code>, writes the registration record to <code>D1</code>, publishes the change.</li>
-            <li><strong>2.0 Verify</strong> (async consumer) calls the Govt/BI API, writes verification state to <code>D2</code>, triggers the email.</li>
-            <li><strong>3.0 Fan-out</strong> keeps <code>D1</code> and the <code>D2</code> replicas in sync; <strong>4.0</strong> derives legal status.</li>
-            <li><strong>5.0 HSN mapping</strong> upserts <code>D3</code>, writes an audit row to <code>D4</code>, notifies accounts.</li>
-            <li><strong>6.0 Nightly cron</strong> scans the BigQuery mirrors (<code>D5</code>), republishes GLIDs, alerts Google Chat. <strong>7.0</strong> serves reads.</li>
+            <li><strong>1.0 Validate &amp; write</strong> checks the rules and writes <code>D1</code> (rating + details + docs) at status <code>-2</code>, then publishes.</li>
+            <li><strong>2.0 Moderation</strong> screens content via external CBS / PII / ML APIs; <strong>3.0 Matchmaking</strong> reads <code>D3</code> and hides the rating if unconnected.</li>
+            <li><strong>4.0 Aggregate</strong> fully recomputes <code>D2</code>; <strong>5.0 Notification</strong> pushes to the supplier; <strong>6.0 LMS sync</strong> feeds a sharded LMS queue.</li>
+            <li><strong>7.0 Seller-risk</strong> emits a Kafka signal; <strong>8.0 Suspect cron</strong> scans pending ratings and writes verdicts back; <strong>9.0 Read</strong> serves the profile page.</li>
           </ul>
         </div>
         <div class="diagram-wrap">
@@ -478,53 +470,54 @@ flowchart LR
     classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
 
-    SUP["Supplier<br/>seller panel / app"]:::ext
-    ADM["GLADMIN / BI team"]:::ext
-    BI["Govt / BI GST<br/>Verification API"]:::ext
-    MAIL["Email / Notification"]:::ext
-    GCHAT["Google Chat alerts"]:::ext
+    BUY["Buyer"]:::ext
+    SUP["Supplier"]:::ext
+    MODAPI["CBS / PII / ML APIs"]:::ext
+    FG["Fraud-graph API"]:::ext
+    LMSX["Lead-Management System"]:::ext
+    RSK["Seller-risk (Kafka)"]:::ext
 
-    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
-    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
-    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
-    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
-    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
-    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
-    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+    P1(("1.0<br/>Validate &amp;<br/>write rating")):::proc
+    P2(("2.0<br/>Moderation<br/>consumer")):::proc
+    P3(("3.0<br/>Matchmaking<br/>check consumer")):::proc
+    P4(("4.0<br/>Aggregate<br/>recompute")):::proc
+    P5(("5.0<br/>Notification<br/>consumer")):::proc
+    P6(("6.0<br/>LMS sync<br/>consumer")):::proc
+    P7(("7.0<br/>Seller-risk<br/>signal")):::proc
+    P8(("8.0<br/>Daily suspect<br/>cron")):::proc
+    P9(("9.0<br/>Read profile<br/>page")):::proc
 
-    D1[("D1 GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
-    D2[("D2 GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
-    D3[("D3 GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
-    D4[("D4 GL_ALL_MASTER_HISTORY (audit)")]:::store
-    D5[("D5 BigQuery history mirrors")]:::store
-    Q[["RabbitMQ queues"]]:::store
+    D1[("D1 GLUSR_RATING + details + docs<br/>meshpg")]:::store
+    D2[("D2 GLUSR_RATING_AGGREGATE")]:::store
+    D3[("D3 glusr_contactbook_mapping")]:::store
+    D4[("D4 glusr_rating_arch")]:::store
+    D5[("D5 GLUSR_RATING approvalPg replica")]:::store
+    Q[["SUPPLIER_FEEDBACK topic queue"]]:::store
 
-    SUP -->|"GST, PAN input"| P1
-    P1 -->|"lock-check read"| D2
-    P1 -->|"write registration"| D1
-    P1 -->|"publish change"| Q
+    BUY -->|"stars, comment, thumbs, photos"| P1
+    P1 -->|"INSERT status -2"| D1
+    P1 -->|"publish"| Q
     Q --> P2
     Q --> P3
     Q --> P4
-    P2 -->|"verify request"| BI
-    BI -->|"turnover, nature, status"| P2
-    P2 -->|"verify state"| D2
-    P2 -->|"success / reject"| MAIL
-    P3 -->|"sync GST/PAN/CIN"| D1
-    P3 -->|"replica sync"| D2
-    P4 -->|"read GST"| D1
-    P4 -->|"legal status code"| D2
-    ADM -->|"INS_HSN / DEL_HSN"| P5
-    P5 -->|"upsert links"| D3
-    P5 -->|"audit row"| D4
-    P5 -->|"notify accounts"| Q
-    P6 -->|"scan changes"| D5
-    P6 -->|"republish GLIDs"| Q
-    P6 -.->|"failure alert"| GCHAT
-    SUP -->|"GET otherdetail / gethsnfromgst"| P7
-    P7 -->|"read"| D1
-    P7 -->|"read"| D3
-    P7 -->|"response"| SUP
+    Q --> P5
+    Q --> P6
+    Q --> P7
+    P2 -->|"screen content"| MODAPI
+    P2 -->|"hide on flag"| D1
+    P3 -->|"connection check"| D3
+    P3 -->|"set -1 if unconnected"| D1
+    P4 -->|"full recompute"| D2
+    P4 -->|"replicate"| D5
+    P5 -->|"push"| SUP
+    P6 -->|"sharded sync"| LMSX
+    P7 -->|"signal"| RSK
+    P8 -->|"scan pending"| D1
+    P8 -->|"ring check"| FG
+    P8 -->|"write-back via IS_ADMIN &rarr; refresh"| D2
+    BUY -->|"profile page"| P9
+    P9 -->|"read"| D1
+    P9 -->|"read"| D2
 </pre>
         </div>
       </article>
@@ -532,149 +525,113 @@ flowchart LR
       <article class="card">
         <header id="d-seq">
           <span class="ico"><i data-lucide="list-ordered"></i></span>
-          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>GST submit &amp; verify, call by call</h3></span>
+          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>Submitting a rating and its background fan-out</h3></span>
         </header>
         <div class="explain">
-<p>The synchronous API path is short; the real work is asynchronous:</p>
+<p>A fresh submit and its parallel fan-out:</p>
           <ol>
-            <li>The API derives PAN, runs regex + checksum, then reads <code>src_id</code> for the lock-check.</li>
-            <li><strong>alt</strong> &mdash; if already verified, the caller gets a <code>200</code> business error and nothing is written.</li>
-            <li>Otherwise the registration row is written, a message published, supplier gets <code>200 OK</code>.</li>
-            <li>The consumer runs three things in <strong>par</strong>allel: MAIN-DB update, BI verify + <code>GLUSR_GST_DETAILS</code> write, conditional RTF upsert.</li>
-            <li><strong>alt</strong> &mdash; any goroutine failure republishes to <code>USER_GST_REPROCESS</code>; on full success the outcome email is sent.</li>
+            <li>The API validates 1&ndash;5, buyer &ne; supplier and the gateway, reads the existing-relationship count, and inserts the rating at display status <code>-2</code> with detail and doc rows.</li>
+            <li>It publishes <code>SUPPLIER_FEEDBACK</code> and returns to the buyer immediately.</li>
+            <li><strong>par</strong> &mdash; independent consumers run: moderation (CBS / PII / ML), matchmaking check (contact-book, sets <code>-1</code> if unconnected), aggregate recompute, push notification, LMS sync.</li>
+            <li>Later, the suspect cron computes a fraud verdict and writes it back through the <code>IS_ADMIN</code> path, refreshing the aggregate.</li>
           </ol>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
 sequenceDiagram
     autonumber
-    actor SUP as Supplier
-    participant API as write-API<br/>UserDetailsController
-    participant MAIN as mainPg<br/>COMP_REGISTRATIONS
-    participant MQ as RabbitMQ
-    participant C as USER_GST_LAST_MODIFIED<br/>consumer
-    participant BI as BI / Govt GST API
-    participant GST as GLUSR_GST_DETAILS<br/>meshPg + trustPg
-    participant MAILC as Email
+    actor B as Buyer
+    participant API as write-API<br/>SupplierRating
+    participant DB as meshpg<br/>GLUSR_RATING
+    participant MQ as RabbitMQ topic
+    participant MOD as moderation consumer
+    participant MM as matchmaking consumer
+    participant AG as aggregate consumer
+    participant NO as notification consumer
+    participant LM as LMS-sync consumer
 
-    SUP->>API: POST /details {type: CompRgst, GST}
-    API->>API: derive PAN, regex + checksum
-    API->>GST: SELECT src_id (lock-check)
-    alt GST already Tactical / OTP verified
-        GST-->>API: src_id = 2 / 3
-        API-->>SUP: 200 business error "GST already verified"
-    else editable
-        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
-        API->>MQ: publish GST_LAST_MODIFIED
-        API-->>SUP: 200 OK (accepted)
-        MQ->>C: deliver message
-        par MAIN-DB update
-            C->>MAIN: UpdateCompRegOnMain()
-        and BI verification
-            C->>BI: CallPubServiceBI()
-            BI-->>C: turnover, nature, status flag
-            C->>GST: UPDATE verification state + src_id
-        and RTF
-            C->>C: RTF upsert (if rtf_flag = 1)
-        end
-        alt any goroutine FAILURE
-            C->>MQ: republish USER_GST_REPROCESS
-        else all success
-            C->>MAILC: SentGstMail() success / rejection
-            MAILC-->>SUP: Email notification
-        end
+    B->>API: POST /supplierrating {stars, comment, thumbs, photos}
+    API->>API: validate 1-5, buyer != supplier, gateway
+    API->>DB: SELECT existing-relationship count
+    API->>DB: INSERT GLUSR_RATING status -2 + details + docs
+    API->>MQ: publish SUPPLIER_FEEDBACK
+    API-->>B: thanks, submitted
+    par moderation
+        MQ->>MOD: deliver
+        MOD->>MOD: CBS + PII + ML checks, hide on flag
+    and matchmaking
+        MQ->>MM: deliver
+        MM->>DB: contact-book check, set -1 if unconnected
+    and aggregate
+        MQ->>AG: deliver
+        AG->>DB: full recompute GLUSR_RATING_AGGREGATE
+    and notification
+        MQ->>NO: push to supplier
+    and LMS sync
+        MQ->>LM: sharded LMS queue
     end
 </pre>
         </div>
       </article>
 
-      <p class="note">Source: <code>GST KT/GST_Business_Doc.md</code> &amp; <code>GST_Technical_Doc.md</code>.
-        Table and function names are as they appear in the Go source; live DB schema is not
-        cross-verified.</p>
+      <p class="note">Source: <code>Rating KT</code> business &amp; technical docs. <code>SUPPLIER_FEEDBACK</code>
+        is a topic-exchange routing key that up to six consumers bind against. The exact positive
+        &ldquo;fully visible&rdquo; display-status value and the meaning of suspect flags
+        1/2/5/6/7/8 live in a DB function and are open questions in the source doc.</p>
     </section>
 
     <section class="glossary" id="glossary">
       <h2>Glossary</h2>
-      <p class="intro">Business terms used above. Verification states map to the internal
-        <code>FK_GST_VERIFICATION_SRC_ID</code> code shown in brackets.</p>
+      <p class="intro">Business terms used above.</p>
       <div class="gloss-group">
-        <h3><i data-lucide="shield-check"></i> Verification states &amp; locking</h3>
+        <h3><i data-lucide="star"></i> Rating &amp; visibility</h3>
         <dl>
-          <dt>Unverified / freshly submitted <span style="font-weight:400">(src&nbsp;1)</span></dt>
-          <dd>GST just entered, or auto-matched at a basic level. The supplier can still edit it freely.</dd>
-          <dt>Tactical Verified <span style="font-weight:400">(src&nbsp;2)</span></dt>
-          <dd>The system auto-matched the GST against the Government / BI database. The GST is now <em>locked</em> &mdash; only a permissioned GLADMIN or a fresh OTP re-proof can edit it.</dd>
-          <dt>OTP Verified <span style="font-weight:400">(src&nbsp;3)</span></dt>
-          <dd>The supplier proved ownership with a one-time password. Strongest lock &mdash; can override even a rejected GST.</dd>
-          <dt>Rejected <span style="font-weight:400">(src&nbsp;4)</span></dt>
-          <dd>The GST failed verification. The supplier may resubmit a corrected GST; the nightly cron also re-checks these.</dd>
-          <dt>Manual Verification <span style="font-weight:400">(src&nbsp;5)</span></dt>
-          <dd>The system could not decide automatically. A human reviewer must confirm or reject.</dd>
-          <dt>GST lock</dt>
-          <dd>The rule that a Tactical- or OTP-verified GST cannot be changed through normal profile editing &mdash; a fraud-prevention feature, not a bug.</dd>
-          <dt>OTP re-proof</dt>
-          <dd>Re-submitting a one-time password to prove GST ownership; one of two routes (the other being a permissioned GLADMIN) that unlock a locked or rejected GST.</dd>
+          <dt>1&ndash;5 star + comment</dt>
+          <dd>The core rating. Rejected outside 1&ndash;5, or if buyer and supplier are the same account.</dd>
+          <dt>Thumbs on Response / Quality / Delivery</dt>
+          <dd>Optional per-parameter up / down votes stored as separate detail rows.</dd>
+          <dt>Display status</dt>
+          <dd><code>-2</code> = hidden (the default on submit), <code>-1</code> = disabled, a positive value = visible. The value that means &ldquo;fully approved&rdquo; is not written explicitly anywhere in code.</dd>
+          <dt>Two-layer fraud protection</dt>
+          <dd>A real-time matchmaking check (hides ratings with no genuine buyer-supplier connection) and a daily suspect cron (deeper cross-buyer ring detection). A rating visible on day one can be hidden on day two.</dd>
+          <dt>Latest-only per pair</dt>
+          <dd>When a new rating arrives for the same buyer-supplier pair, older ones are moved to an archive table; only the newest stays live.</dd>
+          <dt>Reply re-moderated</dt>
+          <dd>A supplier's reply goes through the same CBS / PII / ML moderation as the buyer's original comment.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="file-text"></i> Tax &amp; identity terms</h3>
+        <h3><i data-lucide="workflow"></i> The background pipeline</h3>
         <dl>
-          <dt>GSTIN / GST number</dt>
-          <dd>The 15-character Goods &amp; Services Tax Identification Number. It encodes the state code, the holder's PAN, and the entity type.</dd>
-          <dt>GSTIN checksum</dt>
-          <dd>A mathematical check digit inside the GST number, validated independently of format so typos and fabricated numbers are caught.</dd>
-          <dt>PAN</dt>
-          <dd>Permanent Account Number &mdash; the income-tax ID. It sits inside characters 3&ndash;12 of the GSTIN, so it is auto-extracted. Locked once the GST is verified.</dd>
-          <dt>CIN</dt>
-          <dd>Corporate Identification Number &mdash; the registration number for an incorporated company.</dd>
-          <dt>TAN</dt>
-          <dd>Tax Deduction and Collection Account Number.</dd>
-          <dt>IEC</dt>
-          <dd>Import Export Code. Re-checked by the nightly cron alongside GST.</dd>
-          <dt>Udyam</dt>
-          <dd>The government's MSME (micro / small / medium enterprise) registration number.</dd>
-          <dt>HSN</dt>
-          <dd>Harmonized System of Nomenclature &mdash; the tax-classification code for what a supplier sells. Linked to a GST via the HSN-mapping flow.</dd>
-          <dt>Legal Status / Company Type</dt>
-          <dd>Proprietorship, Partnership / LLP, Private Limited, HUF, Trust, etc. Derived automatically from one character of the GSTIN, so it cannot be inflated.</dd>
-          <dt>Nature of Business</dt>
-          <dd>Manufacturer, wholesaler, retailer, service provider &mdash; returned by the Government / BI verification.</dd>
-          <dt>Annual Turnover</dt>
-          <dd>The yearly-revenue band returned by the Government / BI verification.</dd>
+          <dt><code>SUPPLIER_FEEDBACK</code> fan-out</dt>
+          <dd>A single topic-exchange publish that up to six consumers bind against: moderation, matchmaking, enrichment, aggregate, notification, LMS sync.</dd>
+          <dt>Content moderation</dt>
+          <dd>A CBS banned-keyword check + PII detection + an ML abuse model, run as an API-call-minimising cascade; a flagged field is hidden via a callback into the write API.</dd>
+          <dt>Matchmaking check</dt>
+          <dd>Reads the contact-book mapping to confirm the buyer and supplier were genuinely connected; sets display status <code>-1</code> if not.</dd>
+          <dt>Aggregate recompute</dt>
+          <dd>A supplier-wide rollup of star counts and parameter counts, fully recomputed on every insert, admin action, archival and the 91-day cron.</dd>
+          <dt><code>IS_ADMIN</code> write-back path</dt>
+          <dd>The single path used by admin review, the matchmaking consumer and the suspect cron to change a rating's status &mdash; it always re-triggers the aggregate recompute.</dd>
+          <dt>Seller-risk signal</dt>
+          <dd>A Kafka message per fresh rating feeding a separate supplier risk-scoring pipeline.</dd>
+          <dt>Two LMS sync paths</dt>
+          <dd>An inline packet inside the feedback message and a separate dedicated consumer publishing into a sharded LMS queue set.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="users"></i> People &amp; teams</h3>
+        <h3><i data-lucide="shield-alert"></i> The suspect cron</h3>
         <dl>
-          <dt>Supplier</dt>
-          <dd>The IndiaMART seller who submits or edits the GST.</dd>
+          <dt>Daily suspect scan</dt>
+          <dd>A batch job over still-pending ratings from the last day or two.</dd>
+          <dt><code>fn_get_rating_suspect_flag</code></dt>
+          <dd>A DB function returning a suspect flag per rating; the cron maps flags to display-status actions by priority.</dd>
+          <dt>Ring detection</dt>
+          <dd>For a supplier with several same-day ratings, the cron calls a fraud-graph API pairwise across the rating buyers; 3+ connected pairs flags the group.</dd>
+          <dt>91-day aggregate cron</dt>
+          <dd>A separate scheduled job that forces an aggregate recompute for ratings turning 91 days old, so time-decayed averages stay current.</dd>
           <dt>GLID</dt>
-          <dd>GlobalID &mdash; the unique internal identifier for one user / company account.</dd>
-          <dt>GLADMIN</dt>
-          <dd>An internal admin user. With an explicit screen permission, can override a locked GST.</dd>
-          <dt>BI GST Team</dt>
-          <dd>IndiaMART's Business Intelligence team that runs the system cross-verifying GSTs against the government database.</dd>
-          <dt>Government GST Verification System</dt>
-          <dd>The external, government-backed system that confirms GST validity and returns turnover, nature of business, and registration year.</dd>
-        </dl>
-      </div>
-      <div class="gloss-group">
-        <h3><i data-lucide="workflow"></i> Systems &amp; processes</h3>
-        <dl>
-          <dt>Trust status / trust badge</dt>
-          <dd>The buyer-facing signal that a supplier is a real, tax-registered business. Improves once the GST is verified &mdash; separate from star ratings.</dd>
-          <dt>TACT re-verification cron</dt>
-          <dd>The nightly job that re-checks GSTs (and PAN / CIN / IEC / Udyam) changed in the last 24 hours, plus previously-rejected ones. Sends no supplier email.</dd>
-          <dt>Consumer</dt>
-          <dd>A background worker that processes queued messages asynchronously, after the API has already responded.</dd>
-          <dt>Fan-out</dt>
-          <dd>Propagating one GST change to every database that keeps a copy &mdash; registration record, verification record, and its trust-DB replica.</dd>
-          <dt>Reprocess / retry queue</dt>
-          <dd>Where a partially-failed GST update is re-queued so the change eventually lands in every database.</dd>
-          <dt>RTF (Real Time Feed)</dt>
-          <dd>A generic internal framework for pushing live data updates; reused conditionally by the GST flow.</dd>
-          <dt>Audit trail</dt>
-          <dd>A record of who changed what and when &mdash; written for every HSN mapping add or remove.</dd>
+          <dd>GlobalID &mdash; the unique internal identifier for the buyer or supplier.</dd>
         </dl>
       </div>
     </section>
