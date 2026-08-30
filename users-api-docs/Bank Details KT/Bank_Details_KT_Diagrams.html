@@ -1,6 +1,6 @@
 <meta charset="utf-8" />
-<title>GST &mdash; KT Diagrams</title>
-<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API GST feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<title>Bank Details &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Bank Details feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
@@ -330,14 +330,14 @@
 <div class="shell">
   <aside class="rail">
     <p class="mark">IndiaMART &middot; Users-API KT</p>
-    <p class="mark-title">GST</p>
+    <p class="mark-title">Bank Details</p>
     <nav>
       <ul>
         <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
-        <li><a href="#feature"><i data-lucide="shield-check"></i> GST</a></li>
+        <li><a href="#feature"><i data-lucide="landmark"></i> Bank Details</a></li>
         <li><a href="#d-biz" class="sub">Business flowchart</a></li>
         <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
-        <li><a href="#d-seq" class="sub">Sequence &mdash; submit &amp; verify</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; add or update</a></li>
         <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
       </ul>
     </nav>
@@ -346,11 +346,12 @@
   <main>
     <p class="topbar">Knowledge Transfer &middot; Engineering</p>
 
-    <h1>GST &mdash; Goods &amp; Services Tax</h1>
-    <p class="lede">When a supplier submits or edits a GST number, a full verification process runs behind
-      one text field: format &amp; checksum checks, a lock on already-verified GSTs, an external
-      Government / BI verification call, automatic PAN and legal-status derivation, a nightly
-      re-verification cron, and a separate GST&nbsp;&harr;&nbsp;HSN tax-classification mapping flow.</p>
+    <h1>Bank Details</h1>
+    <p class="lede">A supplier can save several bank accounts (account number, IFSC, holder name); exactly one
+      is the <em>prime</em> account used for payouts and lending. Every change runs through
+      external verification (PennyDrop), a banned-content check on the free-text fields, and a
+      trust-database sync. It is a <code>Type=BankDetails</code> branch of the shared
+      user-details write endpoint &mdash; the most heavily fanned-out feature in this series.</p>
 
     <section class="legend" id="legend">
       <h2>How to read these diagrams</h2>
@@ -387,27 +388,26 @@
     </section>
 
     <section class="feature" id="feature">
-      <p class="kicker"><i data-lucide="shield-check"></i> Trust &amp; Compliance</p>
-      <h2>GST &mdash; Goods &amp; Services Tax</h2>
-      <p>GST is a <code>Type=CompRgst</code> branch of the shared user-details write endpoint.
-      The five business flows (A&ndash;E) are: first submit, locked-GST reject, daily TACT re-verify
-      cron, GST&nbsp;&harr;&nbsp;HSN mapping, and legal-status auto-computation.</p>
+      <p class="kicker"><i data-lucide="landmark"></i> Trust &amp; Compliance</p>
+      <h2>Bank Details</h2>
+      <p>Six flows: supplier adds an account (Flow&nbsp;A), a system / ERP adds one (Flow&nbsp;B),
+      supplier updates or re-primes an account (Flow&nbsp;C), soft delete (Flow&nbsp;D), banned-content
+      auto-clean (Flow&nbsp;E), and read (Flow&nbsp;F). Who is calling &mdash; classified as
+      <code>USER</code>, <code>SYSTEM</code> or <code>MERP</code> &mdash; decides prime assignment.</p>
 
       <article class="card">
         <header id="d-biz">
           <span class="ico"><i data-lucide="git-branch"></i></span>
-          <span><span class="dtype">Business flowchart</span><h3>What happens when a GST is submitted</h3></span>
+          <span><span class="dtype">Business flowchart</span><h3>Who can add an account, and how &ldquo;prime&rdquo; is decided</h3></span>
         </header>
         <div class="explain">
-<p>Read top-down. The main path is a supplier edit; two self-contained
-          sub-flows hang off it with dotted links:</p>
-          <ol>
-            <li><strong>Format gate</strong> &mdash; 15 characters and a valid GSTIN checksum, else rejected.</li>
-            <li><strong>Lock gate</strong> &mdash; a <em>Tactical</em> or <em>OTP verified</em> GST is blocked for a normal supplier; only a permissioned GLADMIN or fresh OTP re-proof passes.</li>
-            <li><strong>Save &amp; verify</strong> &mdash; record saved, PAN auto-extracted, background check against the Government GST database.</li>
-            <li><strong>Outcome</strong> &mdash; pass &rArr; Tactical Verified + legal status + success email; needs-review &rArr; manual queue; fail &rArr; rejected.</li>
-            <li><strong>Nightly cron</strong> re-checks recently-changed and rejected GSTs silently. <strong>HSN mapping</strong> is admin-only.</li>
-          </ol>
+<p>The branch first classifies the caller, which decides whether the new account becomes prime:</p>
+          <ul>
+            <li><strong>USER</strong> (supplier apps, GLADMIN, BUYERMY, SELLERMY) &mdash; always prime, no query.</li>
+            <li><strong>SYSTEM</strong> (ERP, WEBERP, PayWim, and any unmatched gate) &mdash; prime only if a 100&nbsp;ms pre-check finds no existing verified prime account; the check <em>fails open</em> to prime on timeout.</li>
+            <li><strong>MERP</strong> &mdash; never auto-prime.</li>
+          </ul>
+          <p>Setting a new prime un-primes every other account. Delete is soft (<code>ENABLED = -1</code>) and does <em>not</em> clear the prime flag. Mail / SMS goes out only for supplier-driven changes where account number, IFSC or prime status actually changed.</p>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
@@ -418,39 +418,30 @@ flowchart TD
     classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
     classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
 
-    A["Supplier submits / edits GST<br/>seller panel or app"]:::actor
-    B{"Valid format?<br/>15 chars + checksum"}:::decision
-    A --> B
-    B -- No --> R1["Reject: invalid GST"]:::terminal
-    B -- Yes --> C{"Existing GST already<br/>Tactical / OTP verified?"}:::decision
-    C -- "Yes, normal supplier" --> R2["Reject: GST locked<br/>fraud-prevention"]:::terminal
-    C -- "Yes, GLADMIN w/ permission<br/>or OTP re-proof" --> D
-    C -- No --> D["Save GST record<br/>auto-extract PAN"]:::system
-    D --> E["Background: verify against<br/>Govt GST database"]:::external
-    E --> F{"Verification outcome"}:::decision
-    F -- Pass --> G["GST = Tactical Verified<br/>trust status updated"]:::system
-    F -- Needs review --> H["Manual verification queue"]:::system
-    F -- Fail --> I["GST Rejected<br/>supplier can resubmit"]:::terminal
-    G --> J["Auto-derive Legal Status<br/>from GSTIN"]:::system
-    G --> K["Email: GST updated successfully"]:::system
-    I --> K2["Email: GST rejection notice"]:::system
-    G -.->|"later, nightly re-check"| L
-    I -.->|"rejected GSTs re-checked too"| L
-    G -.->|"separate admin flow"| Q
+    A["Supplier / internal tool / ERP<br/>adds or edits a bank account"]:::actor
+    A --> G{"Gateway on allowlist?"}:::decision
+    G -- No --> RJ["Reject: unauthorised request"]:::terminal
+    G -- Yes --> T{"Classify caller"}:::decision
+    T -- "USER (supplier app, GLADMIN...)" --> U["New account forced PRIME"]:::system
+    T -- "MERP" --> M["Never auto-prime"]:::system
+    T -- "SYSTEM (ERP, WEBERP...)" --> P{"Existing verified<br/>prime account?<br/>100 ms pre-check"}:::decision
+    P -- "No / check timed out" --> U
+    P -- "Yes" --> M
+    U --> W["Write bank record"]:::system
+    M --> W
+    W --> X["If new account is prime:<br/>un-prime every other account"]:::system
+    X --> F1["PennyDrop verification"]:::external
+    X --> F2["Banned-content check on<br/>name / address / holder-name"]:::external
+    X --> F3["Trust-database sync"]:::system
+    X --> D{"Supplier-driven &amp;<br/>account no / IFSC / prime changed?"}:::decision
+    D -- Yes --> NT["Email + SMS confirmation"]:::system
+    D -- No --> SN["No notification (silent)"]:::terminal
+    F2 -->|"abusive text found"| CL["Auto-blank the field,<br/>re-write via API"]:::system
 
-    subgraph BG ["Daily automated re-verification (no email)"]
+    subgraph DEL ["Delete"]
         direction TB
-        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["Re-verify via Govt DB"]:::external
-        M --> N{"Result"}:::decision
-        N -- "Now valid" --> O["Auto-mark verified"]:::system
-        N -- "Failed" --> P["Alert internal team (Google Chat)"]:::system
-    end
-
-    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
-        direction TB
-        Q["Internal team links HSN codes to a GST"]:::actor --> S["Dedupe + save mapping"]:::system
-        S --> T["Audit trail recorded"]:::system
-        S --> U["Notify every supplier account on that GST"]:::system
+        DA["Supplier deletes an account"]:::actor --> DS["Soft delete: ENABLED = -1"]:::system
+        DS --> DP["Prime flag is NOT cleared<br/>(known gap)"]:::terminal
     end
 </pre>
         </div>
@@ -459,16 +450,15 @@ flowchart TD
       <article class="card">
         <header id="d-dfd">
           <span class="ico"><i data-lucide="share-2"></i></span>
-          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where GST data moves across processes and stores</h3></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where bank-account data moves across processes and stores</h3></span>
         </header>
         <div class="explain">
-<p>Seven processes cover every flow (A&ndash;E):</p>
+<p>One synchronous write, then a four-way fan-out:</p>
           <ul>
-            <li><strong>1.0 Validate &amp; save</strong> reads the lock state from <code>D2</code>, writes the registration record to <code>D1</code>, publishes the change.</li>
-            <li><strong>2.0 Verify</strong> (async consumer) calls the Govt/BI API, writes verification state to <code>D2</code>, triggers the email.</li>
-            <li><strong>3.0 Fan-out</strong> keeps <code>D1</code> and the <code>D2</code> replicas in sync; <strong>4.0</strong> derives legal status.</li>
-            <li><strong>5.0 HSN mapping</strong> upserts <code>D3</code>, writes an audit row to <code>D4</code>, notifies accounts.</li>
-            <li><strong>6.0 Nightly cron</strong> scans the BigQuery mirrors (<code>D5</code>), republishes GLIDs, alerts Google Chat. <strong>7.0</strong> serves reads.</li>
+            <li><strong>1.0 Validate &amp; classify</strong> checks the gateway allowlist and derives <code>reqType</code>; for SYSTEM it reads <code>D3</code> to decide prime.</li>
+            <li><strong>2.0 Write account</strong> inserts / updates <code>D1</code>; <strong>3.0 Un-prime others</strong> runs async when a prime is set.</li>
+            <li><strong>4.0 General sync + notify</strong> reads <code>GLUSR_USR</code> for the mail / SMS; <strong>5.0 Verify</strong> forwards the account to PennyDrop.</li>
+            <li><strong>6.0 Trust sync</strong> replicates into <code>D2</code>; <strong>7.0 Banned detect</strong> screens the free-text fields and calls the write API back to blank anything flagged.</li>
           </ul>
         </div>
         <div class="diagram-wrap">
@@ -478,53 +468,49 @@ flowchart LR
     classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
     classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
 
-    SUP["Supplier<br/>seller panel / app"]:::ext
-    ADM["GLADMIN / BI team"]:::ext
-    BI["Govt / BI GST<br/>Verification API"]:::ext
-    MAIL["Email / Notification"]:::ext
-    GCHAT["Google Chat alerts"]:::ext
+    SUP["Supplier"]:::ext
+    SYS["Internal tools / ERP<br/>(MERP, WEBERP, PayWim...)"]:::ext
+    PD["PennyDrop<br/>verification API"]:::ext
+    BW["Banned-words API"]:::ext
+    SMS["Email / SMS"]:::ext
 
-    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
-    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
-    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
-    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
-    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
-    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
-    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+    P1(("1.0<br/>Validate &amp;<br/>classify reqType")):::proc
+    P2(("2.0<br/>Write bank<br/>record")):::proc
+    P3(("3.0<br/>Un-prime<br/>other accounts")):::proc
+    P4(("4.0<br/>General sync<br/>+ notify")):::proc
+    P5(("5.0<br/>Verify via<br/>PennyDrop")):::proc
+    P6(("6.0<br/>Trust-PG<br/>sync")):::proc
+    P7(("7.0<br/>Banned-content<br/>detect")):::proc
+    P8(("8.0<br/>Read bank<br/>accounts")):::proc
 
-    D1[("D1 GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
-    D2[("D2 GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
-    D3[("D3 GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
-    D4[("D4 GL_ALL_MASTER_HISTORY (audit)")]:::store
-    D5[("D5 BigQuery history mirrors")]:::store
+    D1[("D1 GLUSR_BANK_DETAILS<br/>meshPg")]:::store
+    D2[("D2 GLUSR_BANK_DETAILS<br/>trustPg replica")]:::store
+    D3[("D3 iil_verification_details")]:::store
+    D4[("D4 bank-proof attachment")]:::store
     Q[["RabbitMQ queues"]]:::store
 
-    SUP -->|"GST, PAN input"| P1
-    P1 -->|"lock-check read"| D2
-    P1 -->|"write registration"| D1
-    P1 -->|"publish change"| Q
-    Q --> P2
-    Q --> P3
+    SUP -->|"account no, IFSC, holder name"| P1
+    SYS -->|"ERP-sourced account"| P1
+    P1 -->|"SYSTEM: prime pre-check"| D3
+    P1 -->|"validated write"| P2
+    P2 -->|"INSERT / UPDATE"| D1
+    P2 -->|"attachment upsert"| D4
+    P2 -->|"if prime set"| P3
+    P3 -->|"set ISPRIME = NULL on others"| D1
+    P2 -->|"publish 4 messages"| Q
     Q --> P4
-    P2 -->|"verify request"| BI
-    BI -->|"turnover, nature, status"| P2
-    P2 -->|"verify state"| D2
-    P2 -->|"success / reject"| MAIL
-    P3 -->|"sync GST/PAN/CIN"| D1
-    P3 -->|"replica sync"| D2
-    P4 -->|"read GST"| D1
-    P4 -->|"legal status code"| D2
-    ADM -->|"INS_HSN / DEL_HSN"| P5
-    P5 -->|"upsert links"| D3
-    P5 -->|"audit row"| D4
-    P5 -->|"notify accounts"| Q
-    P6 -->|"scan changes"| D5
-    P6 -->|"republish GLIDs"| Q
-    P6 -.->|"failure alert"| GCHAT
-    SUP -->|"GET otherdetail / gethsnfromgst"| P7
-    P7 -->|"read"| D1
-    P7 -->|"read"| D3
-    P7 -->|"response"| SUP
+    Q --> P5
+    Q --> P6
+    Q --> P7
+    P4 -->|"read name / mobile / email"| D1
+    P4 -->|"confirmation"| SMS
+    P5 -->|"verify account"| PD
+    P6 -->|"replica sync"| D2
+    P7 -->|"screen free-text fields"| BW
+    P7 -.->|"violation: blank + re-write"| P1
+    SUP -->|"GET otherdetail?type=BankDetails"| P8
+    P8 -->|"read"| D1
+    P8 -->|"accounts + attachments"| SUP
 </pre>
         </div>
       </article>
@@ -532,149 +518,112 @@ flowchart LR
       <article class="card">
         <header id="d-seq">
           <span class="ico"><i data-lucide="list-ordered"></i></span>
-          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>GST submit &amp; verify, call by call</h3></span>
+          <span><span class="dtype">Sequence diagram &middot; Flow A / C</span><h3>Adding or updating a bank account</h3></span>
         </header>
         <div class="explain">
-<p>The synchronous API path is short; the real work is asynchronous:</p>
+<p>Add (<code>id==""</code>) and update (<code>id!=""</code>) share one path:</p>
           <ol>
-            <li>The API derives PAN, runs regex + checksum, then reads <code>src_id</code> for the lock-check.</li>
-            <li><strong>alt</strong> &mdash; if already verified, the caller gets a <code>200</code> business error and nothing is written.</li>
-            <li>Otherwise the registration row is written, a message published, supplier gets <code>200 OK</code>.</li>
-            <li>The consumer runs three things in <strong>par</strong>allel: MAIN-DB update, BI verify + <code>GLUSR_GST_DETAILS</code> write, conditional RTF upsert.</li>
-            <li><strong>alt</strong> &mdash; any goroutine failure republishes to <code>USER_GST_REPROCESS</code>; on full success the outcome email is sent.</li>
+            <li>The API checks the gateway allowlist and classifies the caller as USER / SYSTEM / MERP.</li>
+            <li><strong>alt</strong> &mdash; for SYSTEM, a 100&nbsp;ms pre-check decides prime; a timeout is treated as &ldquo;no existing prime&rdquo;.</li>
+            <li>The row is inserted or updated; if a prime was set, an async query un-primes the rest.</li>
+            <li>Four messages are published. Consumers run in <strong>par</strong>: general sync + mail / SMS, PennyDrop verify, trust-PG sync, banned-content detect.</li>
+            <li><strong>alt</strong> in the notifier &mdash; skip mail / SMS if nothing material changed, or if a prime account has a blank holder name.</li>
           </ol>
         </div>
         <div class="diagram-wrap">
 <pre class="mermaid">
 sequenceDiagram
     autonumber
-    actor SUP as Supplier
-    participant API as write-API<br/>UserDetailsController
-    participant MAIN as mainPg<br/>COMP_REGISTRATIONS
+    actor SUP as Supplier / system
+    participant API as write-API<br/>UserDetails / BankDetails
+    participant DB as meshPg<br/>GLUSR_BANK_DETAILS
     participant MQ as RabbitMQ
-    participant C as USER_GST_LAST_MODIFIED<br/>consumer
-    participant BI as BI / Govt GST API
-    participant GST as GLUSR_GST_DETAILS<br/>meshPg + trustPg
-    participant MAILC as Email
+    participant GEN as general-sync<br/>consumer
+    participant PD as PennyDrop
+    participant TR as trust-PG<br/>consumer
+    participant BAN as banned-detect<br/>consumer
+    participant SMS as Email / SMS
 
-    SUP->>API: POST /details {type: CompRgst, GST}
-    API->>API: derive PAN, regex + checksum
-    API->>GST: SELECT src_id (lock-check)
-    alt GST already Tactical / OTP verified
-        GST-->>API: src_id = 2 / 3
-        API-->>SUP: 200 business error "GST already verified"
-    else editable
-        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
-        API->>MQ: publish GST_LAST_MODIFIED
-        API-->>SUP: 200 OK (accepted)
-        MQ->>C: deliver message
-        par MAIN-DB update
-            C->>MAIN: UpdateCompRegOnMain()
-        and BI verification
-            C->>BI: CallPubServiceBI()
-            BI-->>C: turnover, nature, status flag
-            C->>GST: UPDATE verification state + src_id
-        and RTF
-            C->>C: RTF upsert (if rtf_flag = 1)
-        end
-        alt any goroutine FAILURE
-            C->>MQ: republish USER_GST_REPROCESS
-        else all success
-            C->>MAILC: SentGstMail() success / rejection
-            MAILC-->>SUP: Email notification
-        end
+    SUP->>API: POST /details {type: BankDetails, ac_no, ifsc}
+    API->>API: gateway allowlist + classify USER / SYSTEM / MERP
+    alt reqType = SYSTEM
+        API->>DB: pre-check for existing verified prime, 100 ms
+        DB-->>API: count, timeout treated as 0
+    end
+    API->>DB: INSERT / UPDATE bank record
+    API->>DB: if prime set, async un-prime other accounts
+    API->>MQ: publish general / verify / trust / banned messages
+    API-->>SUP: 200 OK, returns BANK_DETAIL_ID
+    par general sync + notify
+        MQ->>GEN: deliver
+        GEN->>DB: read supplier name / mobile / email
+        GEN->>SMS: send confirmation only on material change
+    and verification
+        MQ->>PD: forward account for PennyDrop verification
+    and trust sync
+        MQ->>TR: replicate into trustPg
+    and banned detect
+        MQ->>BAN: screen free-text fields
+        BAN->>API: on violation, blank field via VALIDATION_KEY
     end
 </pre>
         </div>
       </article>
 
-      <p class="note">Source: <code>GST KT/GST_Business_Doc.md</code> &amp; <code>GST_Technical_Doc.md</code>.
-        Table and function names are as they appear in the Go source; live DB schema is not
-        cross-verified.</p>
+      <p class="note">Source: <code>Bank Details KT</code> business &amp; technical docs. Bank Details is a
+        <code>Type=BankDetails</code> branch of the shared user-details write endpoint; some
+        RabbitMQ routing bindings and the two attribute IDs used for the prime pre-check are
+        marked inferred in the source doc. Live DB schema not cross-verified.</p>
     </section>
 
     <section class="glossary" id="glossary">
       <h2>Glossary</h2>
-      <p class="intro">Business terms used above. Verification states map to the internal
-        <code>FK_GST_VERIFICATION_SRC_ID</code> code shown in brackets.</p>
+      <p class="intro">Business terms used above.</p>
       <div class="gloss-group">
-        <h3><i data-lucide="shield-check"></i> Verification states &amp; locking</h3>
+        <h3><i data-lucide="landmark"></i> Accounts &amp; the prime rule</h3>
         <dl>
-          <dt>Unverified / freshly submitted <span style="font-weight:400">(src&nbsp;1)</span></dt>
-          <dd>GST just entered, or auto-matched at a basic level. The supplier can still edit it freely.</dd>
-          <dt>Tactical Verified <span style="font-weight:400">(src&nbsp;2)</span></dt>
-          <dd>The system auto-matched the GST against the Government / BI database. The GST is now <em>locked</em> &mdash; only a permissioned GLADMIN or a fresh OTP re-proof can edit it.</dd>
-          <dt>OTP Verified <span style="font-weight:400">(src&nbsp;3)</span></dt>
-          <dd>The supplier proved ownership with a one-time password. Strongest lock &mdash; can override even a rejected GST.</dd>
-          <dt>Rejected <span style="font-weight:400">(src&nbsp;4)</span></dt>
-          <dd>The GST failed verification. The supplier may resubmit a corrected GST; the nightly cron also re-checks these.</dd>
-          <dt>Manual Verification <span style="font-weight:400">(src&nbsp;5)</span></dt>
-          <dd>The system could not decide automatically. A human reviewer must confirm or reject.</dd>
-          <dt>GST lock</dt>
-          <dd>The rule that a Tactical- or OTP-verified GST cannot be changed through normal profile editing &mdash; a fraud-prevention feature, not a bug.</dd>
-          <dt>OTP re-proof</dt>
-          <dd>Re-submitting a one-time password to prove GST ownership; one of two routes (the other being a permissioned GLADMIN) that unlock a locked or rejected GST.</dd>
+          <dt>Prime account</dt>
+          <dd>The one bank account per supplier used as the default for payouts and lending integrations. Setting a new prime un-primes the previous one.</dd>
+          <dt>reqType &mdash; USER</dt>
+          <dd>Caller is a supplier-facing gate (supplier app, GLADMIN, BUYERMY, SELLERMY). A new account is always made prime.</dd>
+          <dt>reqType &mdash; SYSTEM</dt>
+          <dd>Caller is an automated system (ERP, WEBERP, PayWim, or any gate not otherwise matched). A new account becomes prime only if no existing verified prime account is found.</dd>
+          <dt>reqType &mdash; MERP</dt>
+          <dd>Caller is the MERP internal tool. A new account is never auto-primed; prime must be set explicitly.</dd>
+          <dt>Un-prime</dt>
+          <dd>An async query that clears <code>GLUSR_BANK_ISPRIME</code> on every other account for the supplier, keeping the &ldquo;only one prime&rdquo; rule &mdash; enforced in code, not by a DB constraint.</dd>
+          <dt>Soft delete</dt>
+          <dd>Delete sets <code>ENABLED = -1</code>; the row and its history stay. It does not clear the prime flag, so a disabled account can still read as prime (known gap).</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="file-text"></i> Tax &amp; identity terms</h3>
+        <h3><i data-lucide="shield-check"></i> Verification &amp; safety</h3>
         <dl>
-          <dt>GSTIN / GST number</dt>
-          <dd>The 15-character Goods &amp; Services Tax Identification Number. It encodes the state code, the holder's PAN, and the entity type.</dd>
-          <dt>GSTIN checksum</dt>
-          <dd>A mathematical check digit inside the GST number, validated independently of format so typos and fabricated numbers are caught.</dd>
-          <dt>PAN</dt>
-          <dd>Permanent Account Number &mdash; the income-tax ID. It sits inside characters 3&ndash;12 of the GSTIN, so it is auto-extracted. Locked once the GST is verified.</dd>
-          <dt>CIN</dt>
-          <dd>Corporate Identification Number &mdash; the registration number for an incorporated company.</dd>
-          <dt>TAN</dt>
-          <dd>Tax Deduction and Collection Account Number.</dd>
-          <dt>IEC</dt>
-          <dd>Import Export Code. Re-checked by the nightly cron alongside GST.</dd>
-          <dt>Udyam</dt>
-          <dd>The government's MSME (micro / small / medium enterprise) registration number.</dd>
-          <dt>HSN</dt>
-          <dd>Harmonized System of Nomenclature &mdash; the tax-classification code for what a supplier sells. Linked to a GST via the HSN-mapping flow.</dd>
-          <dt>Legal Status / Company Type</dt>
-          <dd>Proprietorship, Partnership / LLP, Private Limited, HUF, Trust, etc. Derived automatically from one character of the GSTIN, so it cannot be inflated.</dd>
-          <dt>Nature of Business</dt>
-          <dd>Manufacturer, wholesaler, retailer, service provider &mdash; returned by the Government / BI verification.</dd>
-          <dt>Annual Turnover</dt>
-          <dd>The yearly-revenue band returned by the Government / BI verification.</dd>
+          <dt>PennyDrop</dt>
+          <dd>The external partner that confirms a bank account number + IFSC are real by making a tiny test deposit.</dd>
+          <dt>Banned-content detection</dt>
+          <dd>A shared check that screens the bank name, address and holder-name free-text fields for abusive / spam content and auto-blanks anything flagged.</dd>
+          <dt>VALIDATION_KEY</dt>
+          <dd>A shared secret the banned-content consumer uses to call the write API back and save the cleaned fields.</dd>
+          <dt>Trust-domain sync</dt>
+          <dd>A dedicated consumer that replicates bank-detail changes into the Trust database (<code>trustPg</code>), feeding TrustSeal-style eligibility.</dd>
+          <dt>KYC status</dt>
+          <dd>A per-account status column on the bank record; not driven by this flow directly.</dd>
         </dl>
       </div>
       <div class="gloss-group">
-        <h3><i data-lucide="users"></i> People &amp; teams</h3>
+        <h3><i data-lucide="users"></i> People &amp; systems</h3>
         <dl>
           <dt>Supplier</dt>
-          <dd>The IndiaMART seller who submits or edits the GST.</dd>
+          <dd>The IndiaMART seller who owns the bank accounts.</dd>
           <dt>GLID</dt>
           <dd>GlobalID &mdash; the unique internal identifier for one user / company account.</dd>
-          <dt>GLADMIN</dt>
-          <dd>An internal admin user. With an explicit screen permission, can override a locked GST.</dd>
-          <dt>BI GST Team</dt>
-          <dd>IndiaMART's Business Intelligence team that runs the system cross-verifying GSTs against the government database.</dd>
-          <dt>Government GST Verification System</dt>
-          <dd>The external, government-backed system that confirms GST validity and returns turnover, nature of business, and registration year.</dd>
-        </dl>
-      </div>
-      <div class="gloss-group">
-        <h3><i data-lucide="workflow"></i> Systems &amp; processes</h3>
-        <dl>
-          <dt>Trust status / trust badge</dt>
-          <dd>The buyer-facing signal that a supplier is a real, tax-registered business. Improves once the GST is verified &mdash; separate from star ratings.</dd>
-          <dt>TACT re-verification cron</dt>
-          <dd>The nightly job that re-checks GSTs (and PAN / CIN / IEC / Udyam) changed in the last 24 hours, plus previously-rejected ones. Sends no supplier email.</dd>
+          <dt>Gateway allowlist</dt>
+          <dd>The fixed set of callers permitted to write bank details: MAPI, GLADMIN, BUYERMY, SELLERMY, ERP_BT, ERP_NACH, WEBERP, PAYWIM, MERP, ANDWEB.</dd>
           <dt>Consumer</dt>
-          <dd>A background worker that processes queued messages asynchronously, after the API has already responded.</dd>
+          <dd>A background worker that processes one queue asynchronously. Bank Details has four: general sync, verify, trust sync, banned detect.</dd>
           <dt>Fan-out</dt>
-          <dd>Propagating one GST change to every database that keeps a copy &mdash; registration record, verification record, and its trust-DB replica.</dd>
-          <dt>Reprocess / retry queue</dt>
-          <dd>Where a partially-failed GST update is re-queued so the change eventually lands in every database.</dd>
-          <dt>RTF (Real Time Feed)</dt>
-          <dd>A generic internal framework for pushing live data updates; reused conditionally by the GST flow.</dd>
-          <dt>Audit trail</dt>
-          <dd>A record of who changed what and when &mdash; written for every HSN mapping add or remove.</dd>
+          <dd>Publishing the same change to several queues at once so independent downstream jobs each get it.</dd>
         </dl>
       </div>
     </section>
