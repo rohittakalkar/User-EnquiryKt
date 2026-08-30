@@ -1,0 +1,770 @@
+<meta charset="utf-8" />
+<title>Users-API Flow Atlas</title>
+<meta name="description" content="Per-feature knowledge-transfer diagrams for the IndiaMART Users-API domain — business flowchart, data-flow diagram, and sequence diagram for each module." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+  .rail nav a.pending { color: var(--ink-faint); opacity: .6; cursor: default; font-size: .82rem; padding: .16rem .55rem; display: inline; }
+  .rail nav a.pending::after { content: " \00B7  "; }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Flow Atlas</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+      <h4>Documented</h4>
+      <ul>
+        <li><a href="#gst"><i data-lucide="receipt-text"></i> GST</a></li>
+        <li><a href="#gst-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#gst-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#gst-seq" class="sub">Sequence — submit &amp; verify</a></li>
+      </ul>
+      <h4>Pending</h4>
+      <p style="margin:.2rem 0 0">
+        <a class="pending">Bank Details</a><a class="pending">Blacklist</a><a class="pending">Blocking</a><a class="pending">Disposition</a><a class="pending">Fact Sheet</a><a class="pending">Feedback</a><a class="pending">Flips</a><a class="pending">ID Proof</a><a class="pending">Image</a><a class="pending">InstaFinance</a><a class="pending">KWPL</a><a class="pending">Location Update</a><a class="pending">Logo</a><a class="pending">Matchmaking</a><a class="pending">PNS</a><a class="pending">Rating</a><a class="pending">Trust Verification</a><a class="pending">TrustSeal</a><a class="pending">User Add-Update</a><a class="pending">Verification Process</a><a class="pending" style="opacity:.4">and the rest</a>
+      </p>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Users-API Flow Atlas</h1>
+    <p class="lede">
+      One page per Users-API feature, each explained through three views of the same
+      behaviour: a <strong>business flowchart</strong> for what happens and why, a
+      <strong>data-flow diagram</strong> for where data moves, and a
+      <strong>sequence diagram</strong> for the exact order of calls. Diagrams are
+      generated live, so they stay sharp at any zoom.
+    </p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system (Govt, BI, mail)</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External Govt / BI API</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= GST ================= -->
+    <section class="feature" id="gst">
+      <p class="kicker"><i data-lucide="shield-check"></i> Trust &amp; Compliance</p>
+      <h2>GST &mdash; Goods &amp; Services Tax</h2>
+      <p>
+        When a supplier submits or edits a GST number, a full verification process runs
+        behind one text field: format &amp; checksum checks, a lock that stops edits to
+        already-verified GSTs, an external Government/BI verification call, automatic PAN
+        extraction and legal-status derivation, a nightly re-verification cron, and a
+        separate GST&nbsp;&harr;&nbsp;HSN tax-classification mapping flow.
+      </p>
+
+      <article class="card">
+        <header id="gst-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>What happens when a GST is submitted</h3></span>
+        </header>
+        <div class="explain">
+          <p>Read top-down. The main path is a supplier edit; two self-contained
+          sub-flows hang off it with dotted links:</p>
+          <ol>
+            <li><strong>Format gate</strong> &mdash; 15 characters and a valid GSTIN checksum, else rejected on the spot.</li>
+            <li><strong>Lock gate</strong> &mdash; if the existing GST is already <em>Tactical</em> or <em>OTP verified</em>, a normal supplier is blocked (fraud-prevention, not a bug). Only a permissioned GLADMIN or a fresh OTP re-proof gets through.</li>
+            <li><strong>Save &amp; verify</strong> &mdash; record is saved, PAN is auto-extracted, and a background check hits the Government GST database.</li>
+            <li><strong>Outcome</strong> &mdash; pass &rArr; Tactical Verified + legal status derived + success email; needs-review &rArr; manual queue; fail &rArr; rejected, supplier can resubmit.</li>
+            <li><strong>Nightly cron</strong> re-checks recently-changed and previously-rejected GSTs with no email. <strong>HSN mapping</strong> is an admin-only flow that links tax-classification codes to a GST and notifies every account on it.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Supplier submits / edits GST<br/>seller panel or app"]:::actor
+    B{"Valid format?<br/>15 chars + checksum"}:::decision
+    A --> B
+    B -- No --> R1["Reject: invalid GST<br/>supplier retries"]:::terminal
+    B -- Yes --> C{"Existing GST already<br/>Tactical / OTP verified?"}:::decision
+    C -- "Yes, normal supplier" --> R2["Reject: GST locked<br/>fraud-prevention, not a bug"]:::terminal
+    C -- "Yes, GLADMIN w/ permission<br/>or OTP re-proof" --> D
+    C -- No --> D["Save GST record<br/>auto-extract PAN"]:::system
+    D --> E["Background: verify against<br/>Govt GST database"]:::external
+    E --> F{"Verification outcome"}:::decision
+    F -- Pass --> G["GST = Tactical Verified<br/>trust status updated"]:::system
+    F -- Needs review --> H["Manual verification queue"]:::system
+    F -- Fail --> I["GST Rejected<br/>supplier can resubmit"]:::terminal
+    G --> J["Auto-derive Legal Status<br/>business type from GSTIN"]:::system
+    G --> K["Email: GST updated successfully"]:::system
+    I --> K2["Email: GST rejection notice"]:::system
+
+    G -.->|"later, nightly re-check"| L
+    I -.->|"rejected GSTs re-checked too"| L
+    G -.->|"separate admin flow"| Q
+
+    subgraph BG ["Daily automated re-verification (no email to supplier)"]
+        direction TB
+        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["Re-verify via Govt DB"]:::external
+        M --> N{"Result"}:::decision
+        N -- "Now valid" --> O["Auto-mark verified"]:::system
+        N -- "Failed" --> P["Alert internal team (Google Chat)"]:::system
+    end
+
+    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
+        direction TB
+        Q["Internal team links HSN codes to a GST"]:::actor --> S["Dedupe + save mapping"]:::system
+        S --> T["Audit trail recorded"]:::system
+        S --> U["Notify every supplier account on that GST"]:::system
+    end
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="gst-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where GST data moves across processes and stores</h3></span>
+        </header>
+        <div class="explain">
+          <p>Seven processes cover every flow (A&ndash;E from the technical doc):</p>
+          <ul>
+            <li><strong>1.0 Validate &amp; save</strong> reads the lock state from <code>D2</code>, writes the registration record to <code>D1</code>, and publishes the change onto the queue.</li>
+            <li><strong>2.0 Verify</strong> (async consumer) calls the Govt/BI API, writes verification state to <code>D2</code>, and triggers the success/reject email.</li>
+            <li><strong>3.0 Fan-out</strong> keeps <code>D1</code> and the <code>D2</code> replicas in sync; <strong>4.0</strong> derives legal status.</li>
+            <li><strong>5.0 HSN mapping</strong> upserts <code>D3</code>, writes an audit row to <code>D4</code>, and notifies accounts via the queue.</li>
+            <li><strong>6.0 Nightly cron</strong> scans the BigQuery mirrors (<code>D5</code>), republishes GLIDs, and alerts Google Chat on failure. <strong>7.0</strong> serves all reads.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    SUP["Supplier<br/>seller panel / app"]:::ext
+    ADM["GLADMIN / BI team"]:::ext
+    BI["Govt / BI GST<br/>Verification API"]:::ext
+    MAIL["Email / Notification"]:::ext
+    GCHAT["Google Chat alerts"]:::ext
+
+    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
+    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
+    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
+    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
+    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
+    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
+    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+
+    D1[("D1  GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
+    D2[("D2  GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
+    D3[("D3  GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
+    D4[("D4  GL_ALL_MASTER_HISTORY (audit)")]:::store
+    D5[("D5  BigQuery history mirrors")]:::store
+    Q[["RabbitMQ queues<br/>GST_LAST_MODIFIED, USER_GST_DETAILS"]]:::store
+
+    SUP -->|"GST, PAN input"| P1
+    P1 -->|"lock-check read"| D2
+    P1 -->|"write registration"| D1
+    P1 -->|"publish change"| Q
+    Q --> P2
+    Q --> P3
+    Q --> P4
+    P2 -->|"verify request"| BI
+    BI -->|"turnover, nature, status"| P2
+    P2 -->|"verify state"| D2
+    P2 -->|"success / reject"| MAIL
+    P3 -->|"sync GST/PAN/CIN"| D1
+    P3 -->|"replica sync"| D2
+    P4 -->|"read GST"| D1
+    P4 -->|"legal status code"| D2
+    ADM -->|"INS_HSN / DEL_HSN"| P5
+    P5 -->|"upsert links"| D3
+    P5 -->|"audit row"| D4
+    P5 -->|"notify accounts"| Q
+    P6 -->|"scan changes"| D5
+    P6 -->|"republish GLIDs"| Q
+    P6 -.->|"failure alert"| GCHAT
+    SUP -->|"GET otherdetail / gethsnfromgst"| P7
+    P7 -->|"read"| D1
+    P7 -->|"read"| D3
+    P7 -->|"response"| SUP
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="gst-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flow A</span><h3>GST submit &amp; verify, call by call</h3></span>
+        </header>
+        <div class="explain">
+          <p>The synchronous API path is short; the real work is asynchronous:</p>
+          <ol>
+            <li>The API derives PAN, runs regex + checksum, then reads <code>src_id</code> for the lock-check.</li>
+            <li><strong>alt</strong> &mdash; if already verified, the caller gets a <code>200</code> business error and nothing is written.</li>
+            <li>Otherwise the registration row is written, a message is published, and the supplier gets <code>200 OK</code> immediately.</li>
+            <li>The consumer runs three things in <strong>par</strong>allel: MAIN-DB update, the BI verification call + <code>GLUSR_GST_DETAILS</code> write, and a conditional RTF upsert.</li>
+            <li><strong>alt</strong> &mdash; any goroutine failure republishes to <code>USER_GST_REPROCESS</code>; on full success the outcome email is sent.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor SUP as Supplier
+    participant API as write-API<br/>UserDetailsController
+    participant MAIN as mainPg<br/>COMP_REGISTRATIONS
+    participant MQ as RabbitMQ
+    participant C as USER_GST_LAST_MODIFIED<br/>consumer
+    participant BI as BI / Govt GST API
+    participant GST as GLUSR_GST_DETAILS<br/>meshPg + trustPg
+    participant MAILC as Email
+
+    SUP->>API: POST /details {type: CompRgst, GST}
+    API->>API: derive PAN, regex + checksum
+    API->>GST: SELECT src_id (lock-check)
+    alt GST already Tactical / OTP verified
+        GST-->>API: src_id = 2 / 3
+        API-->>SUP: 200 business error "GST already verified"
+    else editable
+        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
+        API->>MQ: publish GST_LAST_MODIFIED
+        API-->>SUP: 200 OK (accepted)
+        MQ->>C: deliver message
+        par MAIN-DB update
+            C->>MAIN: UpdateCompRegOnMain()
+        and BI verification
+            C->>BI: CallPubServiceBI()
+            BI-->>C: turnover, nature, status flag
+            C->>GST: UPDATE verification state + src_id
+        and RTF
+            C->>C: RTF upsert (if rtf_flag = 1)
+        end
+        alt any goroutine FAILURE
+            C->>MQ: republish USER_GST_REPROCESS
+        else all success
+            C->>MAILC: SentGstMail() success / rejection
+            MAILC-->>SUP: Email notification
+        end
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">
+        Source: <code>GST KT/GST_Business_Doc.md</code> &amp; <code>GST_Technical_Doc.md</code>.
+        Table and function names are as they appear in the Go source; live DB schema is
+        not yet cross-verified (see the technical doc's verification note).
+      </p>
+    </section>
+
+    <!-- ================= GLOSSARY ================= -->
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">
+        Business terms that appear across the diagrams and explanations above. Verification
+        states map to the internal <code>FK_GST_VERIFICATION_SRC_ID</code> code shown in
+        brackets.
+      </p>
+
+      <div class="gloss-group">
+        <h3><i data-lucide="shield-check"></i> Verification states &amp; locking</h3>
+        <dl>
+          <dt>Unverified / freshly submitted <span style="font-weight:400">(src&nbsp;1)</span></dt>
+          <dd>GST has just been entered, or auto-matched at a basic level. The supplier can still edit it freely.</dd>
+
+          <dt>Tactical Verified <span style="font-weight:400">(src&nbsp;2)</span></dt>
+          <dd>The system automatically matched the GST against the external Government / BI GST database. The GST is now <em>locked</em> — a normal supplier can no longer edit it; only a permissioned GLADMIN or a fresh OTP re-proof can.</dd>
+
+          <dt>OTP Verified <span style="font-weight:400">(src&nbsp;3)</span></dt>
+          <dd>The supplier personally proved ownership of the GST with a one-time password. Strongest lock — this proof can override even a rejected GST.</dd>
+
+          <dt>Rejected <span style="font-weight:400">(src&nbsp;4)</span></dt>
+          <dd>The GST failed verification or did not match the Government database. The supplier may submit a corrected GST; the nightly cron also re-checks these automatically.</dd>
+
+          <dt>Manual Verification <span style="font-weight:400">(src&nbsp;5)</span></dt>
+          <dd>The system could not decide automatically. A human reviewer must confirm or reject the GST.</dd>
+
+          <dt>GST lock</dt>
+          <dd>The business rule that a Tactical- or OTP-verified GST cannot be changed through normal profile editing. It is a fraud-prevention feature, not a bug — it stops someone copying a trusted supplier's GST onto their own account.</dd>
+
+          <dt>OTP re-proof</dt>
+          <dd>Re-submitting a one-time password to prove GST ownership. The one route (besides a permissioned GLADMIN) that unlocks a locked or rejected GST.</dd>
+        </dl>
+      </div>
+
+      <div class="gloss-group">
+        <h3><i data-lucide="file-text"></i> Tax &amp; identity terms</h3>
+        <dl>
+          <dt>GSTIN / GST number</dt>
+          <dd>The 15-character Goods &amp; Services Tax Identification Number issued by the Indian government. It encodes the state code, the holder's PAN, and the entity type.</dd>
+
+          <dt>GSTIN checksum</dt>
+          <dd>A mathematical check digit built into the GST number, validated independently of the text format so that typos and fabricated numbers are caught.</dd>
+
+          <dt>PAN</dt>
+          <dd>Permanent Account Number — the income-tax ID. It sits inside characters 3–12 of the GSTIN, so IndiaMART extracts it automatically instead of asking the supplier. Once the GST is verified, PAN is locked too.</dd>
+
+          <dt>CIN</dt>
+          <dd>Corporate Identification Number — the registration number for an incorporated company.</dd>
+
+          <dt>TAN</dt>
+          <dd>Tax Deduction and Collection Account Number — required for businesses that deduct tax at source.</dd>
+
+          <dt>IEC</dt>
+          <dd>Import Export Code — needed to import or export goods. Re-checked by the nightly cron alongside GST.</dd>
+
+          <dt>Udyam</dt>
+          <dd>The government's MSME (micro / small / medium enterprise) registration number.</dd>
+
+          <dt>HSN</dt>
+          <dd>Harmonized System of Nomenclature — the tax-classification code for what a supplier sells. Linked to a GST through the HSN-mapping flow so catalog and tax reporting line up.</dd>
+
+          <dt>Legal Status / Company Type</dt>
+          <dd>Whether the business is a Proprietorship, Partnership / LLP, Private Limited Company, HUF, Trust, etc. Derived automatically from one character of the GSTIN rather than asked, so a supplier cannot inflate it.</dd>
+
+          <dt>Nature of Business</dt>
+          <dd>What the business does — manufacturer, wholesaler, retailer, service provider. Returned by the Government / BI verification and stored on the GST record.</dd>
+
+          <dt>Annual Turnover</dt>
+          <dd>The yearly-revenue band returned by the Government / BI verification.</dd>
+        </dl>
+      </div>
+
+      <div class="gloss-group">
+        <h3><i data-lucide="users"></i> People &amp; teams</h3>
+        <dl>
+          <dt>Supplier</dt>
+          <dd>The IndiaMART seller who submits or edits their GST from the seller panel or app.</dd>
+
+          <dt>GLID</dt>
+          <dd>GlobalID — the unique internal identifier for one user / company account.</dd>
+
+          <dt>GLADMIN</dt>
+          <dd>An internal IndiaMART admin user. With an explicit screen permission, a GLADMIN can override a locked GST — otherwise even they are blocked.</dd>
+
+          <dt>BI GST Team</dt>
+          <dd>IndiaMART's internal Business Intelligence team that runs the system which cross-verifies GSTs against the government database and feeds results back.</dd>
+
+          <dt>Government GST Verification System</dt>
+          <dd>The external, government-backed system that confirms whether a GST is valid and returns real details — turnover, nature of business, registration year, legal status.</dd>
+        </dl>
+      </div>
+
+      <div class="gloss-group">
+        <h3><i data-lucide="workflow"></i> Systems &amp; processes</h3>
+        <dl>
+          <dt>Trust status / trust badge</dt>
+          <dd>The buyer-facing signal that a supplier is a real, tax-registered business. It improves once the GST is verified. Separate from star ratings — a high rating does not mean the GST is verified.</dd>
+
+          <dt>TACT re-verification cron</dt>
+          <dd>The nightly automated job that re-checks GSTs (and PAN / CIN / IEC / Udyam) changed in the last 24 hours, plus previously-rejected ones. Runs silently — it never emails the supplier.</dd>
+
+          <dt>Consumer</dt>
+          <dd>A background worker that processes queued messages asynchronously, after the API has already responded to the supplier.</dd>
+
+          <dt>Fan-out</dt>
+          <dd>Propagating one GST change to every database that keeps a copy — the registration record, the verification record, and its trust-database replica.</dd>
+
+          <dt>Reprocess / retry queue</dt>
+          <dd>Where a partially-failed GST update is re-queued, so the change eventually lands in every database rather than being left half-applied.</dd>
+
+          <dt>RTF (Real Time Feed)</dt>
+          <dd>A generic internal framework for pushing live data updates to downstream systems. The GST flow reuses it conditionally.</dd>
+
+          <dt>Audit trail</dt>
+          <dd>A record of who changed what and when — written for every HSN mapping add or remove.</dd>
+
+          <dt>Registration-screen exemption</dt>
+          <dd>A specific internal onboarding screen is trusted to submit GST values without the usual format and checksum checks.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid &middot;
+      GST module complete, remaining modules pending.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>
