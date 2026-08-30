@@ -1,0 +1,651 @@
+<meta charset="utf-8" />
+<title>Visiting Card &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Visiting Card feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Visiting Card</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="contact"></i> Visiting Card</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; capture then queue</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Visiting Card</h1>
+    <p class="lede">A photo of the supplier's physical business card (front / back), driven through a
+      multi-team review: field capture &rarr; WebERP <em>enrich</em> &rarr; WebERP
+      <em>design</em> &rarr; WebERP <em>approve</em>. A separate <em>No Visiting Card</em>
+      status distinguishes &ldquo;doesn't have one&rdquo; from &ldquo;not uploaded yet&rdquo;.
+      Pending events sync to a dedicated approval database carrying paid-status, work-order and
+      enterprise context so reviewers can prioritise.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="contact"></i> Trust &amp; Compliance</p>
+      <h2>Visiting Card</h2>
+      <p>One write endpoint routes to insert, update or the <code>NO_VC</code> path. Any new
+      photo or design update resets the enrich / design / approval flags, restarting the review.
+      Only pending (non-terminal) writes publish the approval event; the consumer refreshes a
+      latest-snapshot queue and appends an audit row in a separate database.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>A multi-team review behind one photo</h3></span>
+        </header>
+        <div class="explain">
+<p>The write branches by what is sent:</p>
+          <ul>
+            <li><strong>Insert</strong> (no card id) &mdash; needs at least one attachment or design update; creates the record and sets the companion <em>&ldquo;has visiting card&rdquo;</em> flag to <em>Yes</em>.</li>
+            <li><strong>Update</strong> (card id present) &mdash; routes by <code>TYPE</code>: GLADMIN comment, WebERP <em>ENRICH / DESIGN / APPROVE / ENRICHDESIGN</em>, or a field-capture new photo / design update. A new photo or design update <em>resets</em> the enrich / design / approval flags.</li>
+            <li><strong>No Visiting Card</strong> (<code>TYPE=NO_VC</code>) &mdash; upserts only the companion table to <em>No</em>; never touches the card table.</li>
+            <li>After any successful write, the companion flag is set to <em>Yes</em> &mdash; unless the card was rejected with a zero count, which flips it to <em>No</em>.</li>
+            <li>Only a pending / empty-status write publishes the approval event.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef external fill:#FCE7EF,stroke:#C2447A,color:#6A1E3F
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Caller hits POST /visiting/card"]:::actor --> R{"Route"}:::decision
+    R -- "TYPE = NO_VC" --> NV["Upsert companion table: status No<br/>(card table untouched)"]:::system
+    R -- "no card id" --> INS["INSERT card (&ge; 1 attachment)<br/>companion flag: Yes"]:::system
+    R -- "card id present" --> T{"TYPE"}:::decision
+    T -- "GLADMIN" --> CM["Add admin comment"]:::system
+    T -- "WebERP" --> WE["ENRICH / DESIGN / APPROVE / ENRICHDESIGN"]:::system
+    T -- "field capture" --> FC["New photo or design update<br/>&rarr; reset enrich / design / approval flags"]:::system
+
+    INS --> PC{"Status pending / empty?"}:::decision
+    CM --> PC
+    WE --> PC
+    FC --> PC
+    PC -- Yes --> PUB["Publish VISITING_CARD_SERVICE"]:::system
+    PC -- "No (Approved / Rejected)" --> NOPUB["No approval event"]:::terminal
+
+    subgraph AC ["Approval consumer (separate database)"]
+        direction TB
+        X["Read paid-status, work-order count, enterprise type"]:::external --> Y["Refresh pending-approval snapshot<br/>(delete + insert)"]:::system
+        Y --> Z["Append audit row"]:::system
+    end
+    PUB --> X
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where card data, the companion flag and the review queue live</h3></span>
+        </header>
+        <div class="explain">
+<p>The write touches meshpg; the approval consumer works a separate database:</p>
+          <ul>
+            <li><strong>1.0 Validate &amp; route</strong> decides insert / update / <code>NO_VC</code>.</li>
+            <li><strong>2.0 Write card</strong> updates <code>D1</code>; <strong>3.0</strong> syncs the companion flag in <code>D2</code>.</li>
+            <li><strong>4.0 Publish</strong> fires the approval event only for pending states.</li>
+            <li><strong>5.0 Approval consumer</strong> reads the priority context from <code>D5</code>, refreshes the pending-approval snapshot in <code>D3</code> (delete + insert) and appends an audit row to <code>D4</code>.</li>
+            <li><strong>6.0 Read</strong> returns the companion status plus the latest card per approval state.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    FLD["Field team / supplier"]:::ext
+    ADM["GLADMIN"]:::ext
+    WEB["WebERP team"]:::ext
+    BUY["Buyer (read)"]:::ext
+
+    P1(("1.0<br/>Validate &amp;<br/>route")):::proc
+    P2(("2.0<br/>Write<br/>card")):::proc
+    P3(("3.0<br/>Sync companion<br/>has-VC flag")):::proc
+    P4(("4.0<br/>Publish pending<br/>event")):::proc
+    P5(("5.0<br/>Approval<br/>consumer")):::proc
+    P6(("6.0<br/>Read<br/>display")):::proc
+
+    D1[("D1 STS_COMP_VISIT_CARD<br/>meshpg")]:::store
+    D2[("D2 STS_COMP_NO_VISIT_CARD")]:::store
+    D3[("D3 pending-approval snapshot<br/>approvalPg")]:::store
+    D4[("D4 audit trail<br/>approvalPg")]:::store
+    D5[("D5 custtype / WORKORDER / enterprise<br/>+ paid-status JSON")]:::store
+    Q[["VISITING_CARD_SERVICE queue"]]:::store
+
+    FLD -->|"front / back photo"| P1
+    ADM -->|"admin comment"| P1
+    WEB -->|"enrich / design / approve"| P1
+    P1 -->|"insert / update / NO_VC"| P2
+    P2 -->|"write"| D1
+    P2 -->|"has-VC flag"| P3
+    P3 -->|"upsert"| D2
+    P2 -->|"pending only"| P4
+    P4 -->|"publish"| Q
+    Q --> P5
+    P5 -->|"read priority context"| D5
+    P5 -->|"delete + insert"| D3
+    P5 -->|"append"| D4
+    BUY -->|"vcard/display"| P6
+    P6 -->|"companion status + latest per state"| D1
+    P6 -->|"attachment URLs"| BUY
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + F</span><h3>Capturing a card and building the review queue</h3></span>
+        </header>
+        <div class="explain">
+<p>A field-capture insert, then the approval consumer:</p>
+          <ol>
+            <li>The write API validates the gateway and mandatory fields, inserts the card, and sets the companion flag to <em>Yes</em>.</li>
+            <li><strong>alt</strong> &mdash; status pending / empty: it publishes <code>VISITING_CARD_SERVICE</code>; a terminal status does not.</li>
+            <li>The consumer reads customer-type, work-order count and enterprise type, and reads paid-status from a local JSON file.</li>
+            <li>It replaces the pending-approval snapshot (delete + insert) and appends an audit row.</li>
+            <li><strong>alt</strong> &mdash; any step failing Nacks the message for retry; otherwise it acks.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor FLD as Field team
+    participant W as write-API<br/>VisitingCard
+    participant DB as meshpg<br/>STS_COMP_VISIT_CARD
+    participant MQ as RabbitMQ
+    participant C as approval consumer
+    participant AP as approvalPg
+    participant JS as custtype JSON file
+
+    FLD->>W: POST /visiting/card {front / back attachment, no card id}
+    W->>W: gateway allowlist + mandatory fields
+    W->>DB: INSERT card RETURNING id
+    W->>DB: upsert companion has-VC flag = Yes
+    alt status pending / empty
+        W->>MQ: publish VISITING_CARD_SERVICE
+    else terminal status
+        W-->>FLD: success, no approval event
+    end
+    MQ->>C: deliver
+    C->>AP: SELECT custtype, WORKORDER count, enterprise type
+    C->>JS: read paid-status by custtype
+    C->>AP: DELETE + INSERT pending-approval snapshot
+    C->>AP: INSERT audit row
+    alt any step failed
+        C-->>MQ: Nack, requeue
+    else all ok
+        C-->>MQ: ack
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Visiting Card KT</code> business &amp; technical docs. The approval
+        consumer writes a separate <code>approvalPg</code> database and is query-heavy per
+        message. Only pending / empty-status writes publish the approval event; terminal
+        (approved / rejected) writes do not &mdash; flagged as a possible gap in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="contact"></i> Card states</h3>
+        <dl>
+          <dt>Pending (P) / empty</dt>
+          <dd>Card uploaded, decision not yet made. This is the state that enters the review queue.</dd>
+          <dt>Approved (Y)</dt>
+          <dd>Final approval given; the card becomes a public trust signal.</dd>
+          <dt>Rejected (R)</dt>
+          <dd>Card rejected &mdash; e.g. unclear photo or wrong details.</dd>
+          <dt>No Visiting Card</dt>
+          <dd>A companion status (<em>N</em>) meaning the supplier reported they have no card &mdash; distinct from &ldquo;not uploaded yet&rdquo;.</dd>
+          <dt>&ldquo;Has visiting card&rdquo;</dt>
+          <dd>The companion flag (<em>Y</em>) set by almost any successful card write; only a reject-with-zero-count flips it back to <em>N</em>.</dd>
+          <dt>Review-cycle reset</dt>
+          <dd>Uploading a new photo or design update nulls the enrich / design / approval flags, so the review restarts from scratch.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="workflow"></i> The review workflow</h3>
+        <dl>
+          <dt>Field capture</dt>
+          <dd>The field team or supplier uploads the front / back photo (and location on a first capture).</dd>
+          <dt>WebERP ENRICH</dt>
+          <dd>An internal reviewer extracts and verifies the details on the card.</dd>
+          <dt>WebERP DESIGN</dt>
+          <dd>An internal reviewer approves the scan quality &mdash; readable, correct orientation.</dd>
+          <dt>WebERP APPROVE</dt>
+          <dd>The final decision: Approved or Rejected.</dd>
+          <dt>ENRICHDESIGN</dt>
+          <dd>A combined step doing enrich and design in one update.</dd>
+          <dt>GLADMIN comment</dt>
+          <dd>An internal admin annotation on the record; no separate ticketing system.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="list-ordered"></i> The approval queue</h3>
+        <dl>
+          <dt>Approval database</dt>
+          <dd>A separate <code>approvalPg</code> instance the consumer writes &mdash; not the main meshpg.</dd>
+          <dt>Pending-approval snapshot</dt>
+          <dd>A table rebuilt per event (delete + insert) so it always holds the latest state per card, never history.</dd>
+          <dt>Audit trail</dt>
+          <dd>An append-only log of every visiting-card event the consumer processes.</dd>
+          <dt>Priority context</dt>
+          <dd>Paid-status, work-order count and enterprise type attached to each queue entry so reviewers can work paying / enterprise customers first.</dd>
+          <dt>Custtype JSON lookup</dt>
+          <dd>Paid-status is read from a local JSON file keyed by customer-type, not from a database.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>

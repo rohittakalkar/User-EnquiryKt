@@ -1,0 +1,647 @@
+<meta charset="utf-8" />
+<title>Company Logo &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API Company Logo feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">Company Logo</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="stamp"></i> Company Logo</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; upload then approve</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>Company Logo</h1>
+    <p class="lede">A supplier's company logo (four sizes) with a real approval workflow &mdash;
+      <em>Pending &rarr; Approved / Rejected / Deleted</em>. All four actions go through the
+      single <code>POST /user/logo</code> endpoint, distinguished only by which fields are
+      present. Every change fans out to three replicas: search / IMSDB, LMS, and general
+      company-sync. No supplier email; no cron.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="stamp"></i> Storefront &amp; Branding</p>
+      <h2>Company Logo</h2>
+      <p>A new logo is always forced to <em>Pending</em> on insert &mdash; the supplier cannot
+      publish it directly. Approve / reject is the same endpoint with an <code>APPROVAL_ID</code>
+      present, guarded so it only affects a still-Pending record. Every successful write
+      publishes <code>COMPANY_LOGO_SERVICE</code>; three near-identical consumers each replicate
+      to their own database.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>One endpoint, four actions, a moderation gate</h3></span>
+        </header>
+        <div class="explain">
+<p>The caller picks the action by which fields it sends:</p>
+          <ul>
+            <li><strong>Insert</strong> (<code>FLAG=I</code>) &mdash; three image sizes are mandatory; status is hard-coded <em>Pending</em>, whatever the caller sends.</li>
+            <li><strong>Update</strong> (<code>FLAG=U</code>) &mdash; overwrites the images; status becomes whatever the caller passes &mdash; it is <em>not</em> forced back to Pending (a gotcha for re-submits after rejection).</li>
+            <li><strong>Approve / Reject</strong> (<code>APPROVAL_ID</code> present) &mdash; moves a still-Pending record to <em>Approved</em> or <em>Rejected</em> (reason required); a second call on an already-decided record is a silent no-op that still reports success.</li>
+            <li><strong>Delete</strong> (<code>FLAG=D</code>) &mdash; nulls all four images and the reason, status <em>Deleted</em>.</li>
+          </ul>
+          <p>There is no dedicated logo-read API; the buyer-profile query joins the logo table directly for the 90&times;90 size.</p>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Caller hits POST /user/logo"]:::actor --> W{"Which fields are present?"}:::decision
+    W -- "FLAG = I" --> I["INSERT, status forced Pending<br/>(3 sizes mandatory)"]:::system
+    W -- "FLAG = U" --> U["UPDATE images; status = caller value<br/>(NOT forced back to Pending)"]:::system
+    W -- "APPROVAL_ID present" --> AP{"Record still Pending?"}:::decision
+    W -- "FLAG = D" --> DEL["Null all 4 images + reason<br/>status Deleted"]:::system
+    AP -- Yes --> AD["Set Approved, or Rejected + reason"]:::system
+    AP -- "No (already decided)" --> NOOP["Silent no-op, still reports success"]:::terminal
+
+    I --> FO["Publish COMPANY_LOGO_SERVICE"]:::system
+    U --> FO
+    AD --> FO
+    DEL --> FO
+    FO --> R1["Replicate to search / IMSDB"]:::system
+    FO --> R2["Replicate to LMS"]:::system
+    FO --> R3["Replicate to general company-sync"]:::system
+
+    subgraph V ["Visibility"]
+        direction TB
+        VN["Pending / Rejected / Deleted"]:::terminal
+        VY["Approved &rarr; shown to buyers (90x90)"]:::terminal
+    end
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where the logo record is written and replicated</h3></span>
+        </header>
+        <div class="explain">
+<p>One write, a three-way replica fan-out:</p>
+          <ul>
+            <li><strong>1.0 Upsert logo</strong> writes <code>D1</code> for insert / update / approve-reject / delete; approve-reject is guarded by <code>status = 'P'</code>.</li>
+            <li><strong>2.0 Publish</strong> fires <code>COMPANY_LOGO_SERVICE</code> only after a successful DB write.</li>
+            <li><strong>3.0 / 4.0 / 5.0</strong> are three consumers that each apply the same change to <code>D2</code> (search / IMSDB), <code>D3</code> (LMS) and <code>D4</code> (general company-sync).</li>
+            <li><strong>6.0 Read</strong> joins <code>D1</code> in the buyer-profile query.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    SUP["Supplier"]:::ext
+    MOD["GLADMIN moderator"]:::ext
+    BUY["Buyer (read)"]:::ext
+
+    P1(("1.0<br/>Upsert logo<br/>I / U / approve / delete")):::proc
+    P2(("2.0<br/>Publish on<br/>success")):::proc
+    P3(("3.0<br/>Search / IMSDB<br/>replica")):::proc
+    P4(("4.0<br/>LMS<br/>replica")):::proc
+    P5(("5.0<br/>General<br/>company-sync")):::proc
+    P6(("6.0<br/>Read via<br/>buyer profile")):::proc
+
+    D1[("D1 GLUSR_USR_LOGO<br/>meshpg (primary)")]:::store
+    D2[("D2 GLUSR_USR_LOGO<br/>searchPg replica")]:::store
+    D3[("D3 GLUSR_USR_LOGO<br/>lmsPg replica")]:::store
+    D4[("D4 GLUSR_USR_LOGO<br/>general-sync replica")]:::store
+    Q[["COMPANY_LOGO_SERVICE queue<br/>(+ unmonitored fail queues)"]]:::store
+
+    SUP -->|"upload / update / delete"| P1
+    MOD -->|"approve / reject"| P1
+    P1 -->|"INSERT / UPDATE, guarded on status='P'"| D1
+    P1 -->|"on success"| P2
+    P2 -->|"publish"| Q
+    Q --> P3
+    Q --> P4
+    Q --> P5
+    P3 -->|"replicate change"| D2
+    P4 -->|"replicate change"| D3
+    P5 -->|"replicate change"| D4
+    BUY -->|"buyerprofile view"| P6
+    P6 -->|"JOIN 90x90"| D1
+    P6 -->|"logo image"| BUY
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + C</span><h3>Uploading a logo, then moderation</h3></span>
+        </header>
+        <div class="explain">
+<p>An insert, then a moderator approval:</p>
+          <ol>
+            <li>The write API checks the gateway (only <code>MY</code> / <code>GLADMIN</code>) and mandatory fields, then inserts with status forced to <em>Pending</em> and returns the approval id.</li>
+            <li>It publishes <code>COMPANY_LOGO_SERVICE</code>; three consumers replicate the insert in <strong>par</strong>allel to their own databases.</li>
+            <li>A moderator calls the same endpoint with the <code>APPROVAL_ID</code> and <code>STATUS=A</code>; the guarded <code>UPDATE ... WHERE status = 'P'</code> runs.</li>
+            <li><strong>alt</strong> &mdash; if the record already moved on, zero rows change but the response is still <em>&ldquo;UPDATE SUCCESS&rdquo;</em>; otherwise the decision is replicated by the same three consumers.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor SUP as Supplier
+    participant W as write-API<br/>UserLogo
+    participant DB as meshpg<br/>GLUSR_USR_LOGO
+    participant MQ as RabbitMQ
+    participant IM as IMSDB consumer
+    participant LM as LMS consumer
+    participant GS as general-sync consumer
+    actor MOD as GLADMIN moderator
+
+    SUP->>W: POST /user/logo {FLAG:I, 3 image sizes}
+    W->>W: gateway MY / GLADMIN + mandatory fields
+    W->>DB: INSERT status forced 'P' RETURNING approval id
+    W->>MQ: publish COMPANY_LOGO_SERVICE
+    W-->>SUP: UPDATE SUCCESS
+    par search / IMSDB
+        MQ->>IM: deliver
+        IM->>DB: INSERT into searchPg copy
+    and LMS
+        MQ->>LM: deliver
+        LM->>DB: INSERT into lmsPg copy
+    and general sync
+        MQ->>GS: deliver
+        GS->>DB: INSERT into general-sync copy
+    end
+
+    MOD->>W: POST /user/logo {APPROVAL_ID, STATUS:A}
+    W->>DB: UPDATE ... SET 'A' WHERE status = 'P'
+    alt record already decided
+        W-->>MOD: UPDATE SUCCESS (no-op, zero rows)
+    else still pending
+        W->>MQ: publish COMPANY_LOGO_SERVICE
+        MQ->>IM: replicate the decision
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Logo KT</code> business &amp; technical docs. All four actions share
+        <code>POST /user/logo</code>. No supplier email and no cron. The three fan-out consumers
+        diverge in failure handling and two republish to fail queues that have no registered
+        consumer &mdash; flagged in the source doc, along with whether re-submit forces status
+        back to Pending.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="stamp"></i> Approval lifecycle</h3>
+        <dl>
+          <dt>Pending (P)</dt>
+          <dd>The state a new logo is forced into on insert. The supplier cannot publish a logo directly.</dd>
+          <dt>Approved (A)</dt>
+          <dd>Set by a moderator; the logo becomes visible to buyers.</dd>
+          <dt>Rejected (R)</dt>
+          <dd>Set by a moderator, with a mandatory rejection reason. The previous logo keeps showing.</dd>
+          <dt>Deleted (D)</dt>
+          <dd>A soft-delete &mdash; all four image columns and the reason are nulled, the row stays.</dd>
+          <dt>One endpoint, keyed by fields</dt>
+          <dd>Insert, update, approve / reject and delete all use <code>POST /user/logo</code>, distinguished by <code>FLAG</code> and whether <code>APPROVAL_ID</code> is present.</dd>
+          <dt>Guarded approve / reject</dt>
+          <dd>The moderation UPDATE only affects a record still at <code>status = 'P'</code>; a second call is a silent no-op that still reports success.</dd>
+          <dt>Update does not reset status</dt>
+          <dd>On <code>FLAG=U</code>, status becomes whatever the caller sends &mdash; it is not forced back to Pending, so a re-submit after rejection can keep a stale status.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="share-2"></i> Fan-out</h3>
+        <dl>
+          <dt><code>COMPANY_LOGO_SERVICE</code></dt>
+          <dd>The queue every successful logo write publishes to, sharded 20 ways by GLID.</dd>
+          <dt>Three replicas</dt>
+          <dd>Three near-identical consumers each apply the change to their own database: search / IMSDB, LMS, and general company-sync.</dd>
+          <dt>Fail queues with no consumer</dt>
+          <dd>Two of the three consumers republish failures to <code>_FAIL</code> queues that are not registered anywhere &mdash; a silent replica-drift risk.</dd>
+          <dt>Publish only on success</dt>
+          <dd>The RabbitMQ message is only populated inside the DB-write success branches, so a failed write never fans out.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="users"></i> People &amp; reads</h3>
+        <dl>
+          <dt>Supplier</dt>
+          <dd>Uploads, updates or deletes the logo.</dd>
+          <dt>GLADMIN moderator</dt>
+          <dd>Approves or rejects a Pending logo. The only two caller types allowed on the endpoint at all are <code>MY</code> and <code>GLADMIN</code>.</dd>
+          <dt>No dedicated logo-read API</dt>
+          <dd>The logo is read via the buyer-profile query (a direct JOIN for the 90&times;90 size) and via the search / PDP datasets the IMSDB replica keeps in sync.</dd>
+          <dt>Employee-name resolution</dt>
+          <dd>When an internal user acts, their <code>UPDATEDBY_ID</code> is resolved to <code>&ldquo;name (id)&rdquo;</code> via an extra lookup for the audit trail.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier the logo belongs to.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>

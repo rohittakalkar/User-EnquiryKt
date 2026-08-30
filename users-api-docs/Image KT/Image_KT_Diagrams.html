@@ -1,0 +1,611 @@
+<meta charset="utf-8" />
+<title>User Image &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API User Image feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">User Image</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="image"></i> User Image</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; upload and display</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>User Image</h1>
+    <p class="lede">A supplier uploads general branding photos in five pre-sized resolutions. Unlike the
+      company logo, there is <em>no</em> approval workflow &mdash; the write is a plain
+      UPDATE-first, INSERT-fallback per supplier. The image comes back inside the shared
+      <code>/detail</code> profile response, largest-available size first. Fully synchronous:
+      no queue, consumer or cron. A <code>STATUS</code> field exists but no code path that
+      sets it was found.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="image"></i> Storefront &amp; Branding</p>
+      <h2>User Image</h2>
+      <p>One write endpoint (<code>POST /user/image</code>) and one read path (the image
+      sub-object inside <code>/detail</code>). The client sends already-resized URLs; this
+      feature does no image processing. The read picks the first non-empty of the 250, 125 or
+      64&nbsp;px sizes.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>A simple upload with an update-first write</h3></span>
+        </header>
+        <div class="explain">
+<p>Write and read are both a single round-trip:</p>
+          <ol>
+            <li>The caller must be on the allowlist &mdash; BuyerMy, MAPI, SellerMy, Android, iOS &mdash; and send the mandatory fields plus a <code>STATUS</code> of <code>P</code>, <code>D</code>, <code>A</code> or <code>Y</code>.</li>
+            <li>If an employee id is supplied it is validated first (an extra DB read before the cheap checks).</li>
+            <li>The write tries <code>UPDATE GLUSR_USR_IMAGE</code>; if it affects zero rows it does an <code>INSERT</code> instead.</li>
+            <li>Either way the response says <em>&ldquo;UPDATE SUCCESS&rdquo;</em> &mdash; an insert is masked, so the caller cannot tell new from updated.</li>
+            <li>On a profile read, the largest available size wins (250&nbsp;&rarr;&nbsp;125&nbsp;&rarr;&nbsp;64); with no image uploaded the field is an empty string, never a placeholder.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["Supplier uploads an image<br/>5 pre-sized URLs + width / height"]:::actor
+    A --> G{"Caller on allowlist?<br/>BuyerMy / MAPI / SellerMy / Android / iOS"}:::decision
+    G -- No --> RJ["Reject: gateway not validated"]:::terminal
+    G -- Yes --> V{"Mandatory fields present &amp;<br/>STATUS in P / D / A / Y ?"}:::decision
+    V -- No --> RJ2["Reject with field error"]:::terminal
+    V -- Yes --> EMP["If employee id sent:<br/>validate it first"]:::system
+    EMP --> U["UPDATE GLUSR_USR_IMAGE<br/>WHERE supplier"]:::system
+    U --> R{"Rows affected?"}:::decision
+    R -- "&gt; 0" --> OK["Respond: UPDATE SUCCESS"]:::terminal
+    R -- "0" --> INS["INSERT GLUSR_USR_IMAGE"]:::system
+    INS --> OK2["Respond: UPDATE SUCCESS<br/>(insert is masked)"]:::terminal
+
+    subgraph RD ["Display via /detail"]
+        direction TB
+        D["Client fetches supplier profile"]:::actor --> P["Pick first non-empty:<br/>250 &rarr; 125 &rarr; 64 px"]:::system
+        P --> PE{"Any size present?"}:::decision
+        PE -- Yes --> PS["Return that image URL"]:::terminal
+        PE -- No --> PN["Return empty string, no placeholder"]:::terminal
+    end
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where the image record is written and read</h3></span>
+        </header>
+        <div class="explain">
+<p>Two processes, one main store:</p>
+          <ul>
+            <li><strong>1.0 Validate &amp; upsert</strong> checks the allowlist, the mandatory fields and the <code>STATUS</code> enum, optionally reads <code>D2</code> to validate an employee id, then UPDATE-or-INSERTs <code>D1</code>.</li>
+            <li><strong>2.0 Read via <code>/detail</code></strong> pulls the image columns as a sub-select inside the combined profile query and returns the largest available size.</li>
+          </ul>
+          <p>No queue, consumer or fan-out exists for this feature.</p>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    SUP["Supplier / client app"]:::ext
+    CLI["Buyer / app (profile read)"]:::ext
+
+    P1(("1.0<br/>Validate &amp;<br/>upsert image")):::proc
+    P2(("2.0<br/>Read via<br/>/detail")):::proc
+
+    D1[("D1 GLUSR_USR_IMAGE<br/>meshpg")]:::store
+    D2[("D2 employee table<br/>(optional lookup)")]:::store
+
+    SUP -->|"5 sized URLs, WH, STATUS"| P1
+    P1 -->|"validate employee id"| D2
+    P1 -->|"UPDATE, then INSERT if 0 rows"| D1
+    CLI -->|"GET /detail?others=ALL"| P2
+    P2 -->|"image sub-select"| D1
+    P2 -->|"largest available size or empty"| CLI
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Write / Read</span><h3>Uploading an image and how it displays</h3></span>
+        </header>
+        <div class="explain">
+<p>Upload then display, on one table:</p>
+          <ol>
+            <li>The write API runs the gateway check, the mandatory-field check and the <code>STATUS</code> enum check; if an employee id was sent it is validated against the employee table.</li>
+            <li>It attempts an <code>UPDATE</code> keyed by supplier.</li>
+            <li><strong>alt</strong> &mdash; rows affected: success. Zero rows: an <code>INSERT</code> follows, whose internal <em>&ldquo;INSERT SUCCESS&rdquo;</em> is rewritten to <em>&ldquo;UPDATE SUCCESS&rdquo;</em> in the response.</li>
+            <li>Later, a profile read pulls the image columns in one combined query and returns the first non-empty of 250 / 125 / 64&nbsp;px.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor SUP as Supplier
+    participant W as write-API<br/>UserImage
+    participant EMP as employee table
+    participant DB as meshpg<br/>GLUSR_USR_IMAGE
+    actor CLI as Client, later
+    participant R as read-API<br/>/detail
+
+    SUP->>W: POST /user/image {5 sized URLs, WH, STATUS}
+    W->>W: gateway allowlist + mandatory + STATUS enum
+    W->>EMP: validate employee id, if sent
+    W->>DB: UPDATE GLUSR_USR_IMAGE WHERE supplier
+    alt rows affected
+        W-->>SUP: UPDATE SUCCESS
+    else zero rows
+        W->>DB: INSERT GLUSR_USR_IMAGE
+        W-->>SUP: UPDATE SUCCESS (insert masked)
+    end
+
+    CLI->>R: GET /detail?others=ALL
+    R->>DB: combined profile query with image sub-select
+    DB-->>R: 250 / 125 / 64 px columns
+    R-->>CLI: first non-empty size, or empty string
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>Image KT</code> business &amp; technical docs. A
+        <code>Type=Image</code> feature separate from the company logo; fully synchronous, no
+        queue / consumer / cron. Consumer queues that share the word &ldquo;image&rdquo; in the
+        codebase replicate the core user row, not this table. The meaning of <code>STATUS</code>
+        values and who sets them are open questions in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="image"></i> The image record</h3>
+        <dl>
+          <dt>Five resolutions</dt>
+          <dd>32, 64, 125, 250&nbsp;px and original &mdash; each with a companion width / height value. The client sends already-resized URLs; this feature does not process images.</dd>
+          <dt><code>STATUS</code> P / D / A / Y</dt>
+          <dd>A single-letter status on the record. The exact meanings are not documented in code, and no path that sets it (a moderation flow) was found.</dd>
+          <dt><code>REJECT_REASON</code></dt>
+          <dd>A free-text field alongside the status. Same open question &mdash; no code writes it beyond the client-supplied value.</dd>
+          <dt>UPDATE-first, INSERT-fallback</dt>
+          <dd>The write tries an <code>UPDATE</code> keyed by supplier; only if that affects zero rows does it <code>INSERT</code>.</dd>
+          <dt>Insert masked as update</dt>
+          <dd>An internal <em>&ldquo;INSERT SUCCESS&rdquo;</em> is rewritten to <em>&ldquo;UPDATE SUCCESS&rdquo;</em> before responding, so callers cannot tell new from updated.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="eye"></i> Read behaviour</h3>
+        <dl>
+          <dt><code>/detail</code> endpoint</dt>
+          <dd>There is no dedicated image-read API; the image comes back as a sub-object inside the shared supplier-profile response.</dd>
+          <dt>Largest-available size</dt>
+          <dd>The read returns the first non-empty of 250&nbsp;&rarr;&nbsp;125&nbsp;&rarr;&nbsp;64&nbsp;px.</dd>
+          <dt>The <code>logo=1</code> param</dt>
+          <dd>A misleadingly-named flag on <code>/detail</code> that actually gates the <em>image</em> sub-query, not the separate logo table.</dd>
+          <dt>No placeholder</dt>
+          <dd>With no image uploaded the field is an empty string; the system supplies no default image.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="key-round"></i> Access &amp; scope</h3>
+        <dl>
+          <dt>Gateway allowlist</dt>
+          <dd>The callers allowed to upload: BuyerMy, MAPI, SellerMy, Android, iOS.</dd>
+          <dt>Employee-id lookup</dt>
+          <dd>If <code>UPDATEDBY_ID</code> is supplied, an extra DB read validates it before the cheap in-memory checks; failure aborts the request.</dd>
+          <dt>Separate from Logo</dt>
+          <dd>Image (<code>GLUSR_USR_IMAGE</code>) and Logo (<code>GLUSR_USR_LOGO</code>) are different tables with different size sets and no coupling.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier the image belongs to.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>
