@@ -511,6 +511,118 @@ individual flows mein todne ka yehi tareeka hai jo tumne poocha tha.
 
 ---
 
+## 12B. Data Flow Diagram (DFD — Level 1)
+
+Yeh DFD dikhata hai **data kahan se kahan flow karta hai** — external entities (👤 / 🏛️),
+numbered processes (⚙️), aur data stores (🗄️ / 📨). Har flow (section 10 A–E) yahan ek saath
+map hua hai. Data-store notation: `D1..D5` persistent tables, `Q` message queues.
+
+```mermaid
+flowchart LR
+    classDef ext fill:#E3F2FD,stroke:#1565C0,color:#0D47A1
+    classDef proc fill:#F1F8E9,stroke:#2E7D32,color:#1B5E20
+    classDef store fill:#FFF3E0,stroke:#EF6C00,color:#E65100
+
+    SUP["👤 Supplier<br/>seller panel / app"]:::ext
+    ADM["🧑‍💼 GLADMIN / BI team"]:::ext
+    BI["🏛️ Govt / BI GST<br/>Verification API"]:::ext
+    MAIL["📧 Email / Notification"]:::ext
+    GCHAT["🔔 Google Chat alerts"]:::ext
+
+    P1(("1.0<br/>Validate &amp;<br/>save GST / PAN")):::proc
+    P2(("2.0<br/>Verify GST<br/>consumer")):::proc
+    P3(("3.0<br/>Fan-out change<br/>to all DBs")):::proc
+    P4(("4.0<br/>Compute<br/>Legal Status")):::proc
+    P5(("5.0<br/>GST &harr; HSN<br/>mapping")):::proc
+    P6(("6.0<br/>Daily TACT<br/>re-verify cron")):::proc
+    P7(("7.0<br/>Read GST /<br/>statutory details")):::proc
+
+    D1[("D1 &nbsp; GLUSR_USR_COMP_REGISTRATIONS<br/>mainPg / meshPg")]:::store
+    D2[("D2 &nbsp; GLUSR_GST_DETAILS<br/>meshPg + trustPg")]:::store
+    D3[("D3 &nbsp; GST_TO_HSN_MAPPING / HSN_MASTER")]:::store
+    D4[("D4 &nbsp; GL_ALL_MASTER_HISTORY — audit")]:::store
+    D5[("D5 &nbsp; BigQuery history mirrors")]:::store
+    Q[["📨 RabbitMQ queues<br/>GST_LAST_MODIFIED, USER_GST_DETAILS, ..."]]:::store
+
+    SUP -->|"GST, PAN input"| P1
+    P1 -->|"lock-check read"| D2
+    P1 -->|"write registration"| D1
+    P1 -->|"publish change"| Q
+    Q --> P2
+    Q --> P3
+    Q --> P4
+    P2 -->|"verify request"| BI
+    BI -->|"turnover, nature, status"| P2
+    P2 -->|"verification state"| D2
+    P2 -->|"success / reject"| MAIL
+    P3 -->|"sync GST/PAN/CIN"| D1
+    P3 -->|"replica sync"| D2
+    P4 -->|"read GST"| D1
+    P4 -->|"legal status code"| D2
+    ADM -->|"INS_HSN / DEL_HSN"| P5
+    P5 -->|"upsert links"| D3
+    P5 -->|"audit row"| D4
+    P5 -->|"notify accounts"| Q
+    P6 -->|"scan yesterday's changes"| D5
+    P6 -->|"republish GLIDs"| Q
+    P6 -.->|"failure alert"| GCHAT
+    SUP -->|"GET otherdetail / gethsnfromgst"| P7
+    P7 -->|"read"| D1
+    P7 -->|"read"| D3
+    P7 -->|"response"| SUP
+```
+
+---
+
+## 12C. Sequence Diagram — Flow A (GST Submit + Verify)
+
+Section 10 Flow A ka time-ordered view — synchronous API path, phir async consumer ke andar
+3 parallel goroutines, BI API call, aur email. `alt` blocks lock-reject aur failure-retry
+branches dikhate hain.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor SUP as 👤 Supplier
+    participant API as ⚙️ write-API<br/>UserDetailsController
+    participant MAIN as 🗄️ mainPg<br/>COMP_REGISTRATIONS
+    participant MQ as 📨 RabbitMQ
+    participant C as 🔧 USER_GST_LAST_MODIFIED<br/>consumer
+    participant BI as 🏛️ BI / Govt GST API
+    participant GST as 🗄️ GLUSR_GST_DETAILS<br/>meshPg + trustPg
+    participant MAILC as 📧 Email
+
+    SUP->>API: POST /details {type: CompRgst, GST}
+    API->>API: derive PAN, regex + checksum
+    API->>GST: SELECT src_id (lock-check)
+    alt GST already Tactical / OTP verified
+        GST-->>API: src_id = 2 / 3
+        API-->>SUP: 200 business error "GST already verified"
+    else editable
+        API->>MAIN: INSERT / UPDATE GST, PAN, CIN, TAN
+        API->>MQ: publish GST_LAST_MODIFIED
+        API-->>SUP: 200 OK (accepted)
+        MQ->>C: deliver message
+        par MAIN-DB update
+            C->>MAIN: UpdateCompRegOnMain()
+        and BI verification
+            C->>BI: CallPubServiceBI()
+            BI-->>C: turnover, nature, status flag
+            C->>GST: UPDATE verification state + src_id
+        and RTF
+            C->>C: RTF upsert (if rtf_flag = 1)
+        end
+        alt any goroutine FAILURE
+            C->>MQ: republish USER_GST_REPROCESS
+        else all success
+            C->>MAILC: SentGstMail() success / rejection
+            MAILC-->>SUP: Email notification
+        end
+    end
+```
+
+---
+
 ## 13. Cron Inventory
 
 | Cron | Live hai? | Trigger | Kya karta hai |

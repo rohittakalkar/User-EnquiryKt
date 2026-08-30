@@ -220,6 +220,60 @@ hain:
 
 ---
 
+## 9. Business Requirement Flowchart
+
+Yeh flowchart upar ke saare business flows (A–E) ek jagah dikhata hai — kaun trigger karta
+hai, kahan decision lagta hai, aur supplier ke liye end result kya hota hai. Har icon ek
+role/step type batata hai: 👤 supplier action, ⚙️ system, 🏛️ external Govt/BI, 🔒 security
+lock, 📧 notification, ⏰ scheduled job.
+
+```mermaid
+flowchart TD
+    classDef actor fill:#E3F2FD,stroke:#1565C0,color:#0D47A1
+    classDef system fill:#F1F8E9,stroke:#558B2F,color:#33691E
+    classDef decision fill:#FFF8E1,stroke:#F9A825,color:#F57F17
+    classDef external fill:#FCE4EC,stroke:#AD1457,color:#880E4F
+    classDef terminal fill:#ECEFF1,stroke:#546E7A,color:#263238
+
+    A["👤 Supplier submits / edits GST<br/>seller panel or app"]:::actor
+    B{"📏 Valid format?<br/>15 chars + checksum"}:::decision
+    A --> B
+    B -- No --> R1["❌ Reject — invalid GST<br/>supplier retries"]:::terminal
+    B -- Yes --> C{"🔒 Existing GST already<br/>Tactical / OTP verified?"}:::decision
+    C -- "Yes — normal supplier" --> R2["❌ Reject — GST locked<br/>fraud-prevention, not a bug"]:::terminal
+    C -- "Yes — GLADMIN w/ permission<br/>or OTP re-proof" --> D
+    C -- No --> D["⚙️ Save GST record<br/>auto-extract PAN"]:::system
+    D --> E["🏛️ Background — verify against<br/>Govt GST database"]:::external
+    E --> F{"Verification outcome"}:::decision
+    F -- Pass --> G["✅ GST = Tactical Verified<br/>trust status updated"]:::system
+    F -- Needs review --> H["🧑‍💼 Manual verification queue"]:::system
+    F -- Fail --> I["❌ GST Rejected<br/>supplier can resubmit"]:::terminal
+    G --> J["🏷️ Auto-derive Legal Status<br/>business type from GSTIN"]:::system
+    G --> K["📧 Email — GST updated successfully"]:::system
+    I --> K2["📧 Email — GST rejection notice"]:::system
+
+    G -.->|"later, nightly re-check"| L
+    I -.->|"rejected GSTs re-checked too"| L
+    G -.->|"separate admin flow"| Q
+
+    subgraph BG ["⏰ Daily automated re-verification — no email to supplier"]
+        direction TB
+        L["Nightly job scans yesterday's<br/>GST / PAN / CIN changes"]:::system --> M["🏛️ Re-verify via Govt DB"]:::external
+        M --> N{"Result"}:::decision
+        N -- "Now valid" --> O["Auto-mark verified"]:::system
+        N -- "Failed" --> P["🔔 Alert internal team — Google Chat"]:::system
+    end
+
+    subgraph HSN ["GST &harr; HSN tax-classification mapping"]
+        direction TB
+        Q["🧑‍💼 Internal team links HSN codes to a GST"]:::actor --> S["⚙️ Dedupe + save mapping"]:::system
+        S --> T["📝 Audit trail recorded"]:::system
+        S --> U["📨 Notify every supplier account on that GST"]:::system
+    end
+```
+
+---
+
 ## See also
 
 - [`GST_Technical_Doc.md`](./GST_Technical_Doc.md) — same flows, code-level detail (APIs, DB
