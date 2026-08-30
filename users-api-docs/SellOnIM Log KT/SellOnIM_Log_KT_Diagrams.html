@@ -1,0 +1,661 @@
+<meta charset="utf-8" />
+<title>SellOnIM Log &mdash; KT Diagrams</title>
+<meta name="description" content="Knowledge-transfer diagrams for the IndiaMART Users-API SellOnIM Log feature — business flowchart, data-flow diagram, and sequence diagram, with a business glossary." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.3/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* Single, deliberate light theme — white ground, dark ink, one deep-cyan accent. */
+  :root {
+    --ground:        #FFFFFF;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #F4F6F7;
+    --ink:           #16242B;
+    --ink-soft:      #45555C;
+    --ink-faint:     #6E7C83;
+    --border:        #E2E6E8;
+    --border-strong: #CBD2D5;
+    --accent:        #0A6E97;
+    --accent-deep:   #074E6C;
+    --accent-wash:   #E6F2F7;
+    --good:          #2E7D5B;
+    --warn:          #9A6400;
+    --crit:          #B23A2E;
+    --shadow:        0 1px 2px rgba(22,36,43,.05), 0 10px 26px -14px rgba(22,36,43,.16);
+    --maxread:       68ch;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  svg.lucide { width: 1em; height: 1em; stroke-width: 2; vertical-align: -0.14em; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--border);
+    padding: 2.4rem 1.5rem 3rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .rail .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 .3rem;
+  }
+  .rail .mark-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.6rem;
+    letter-spacing: -.01em;
+  }
+  .rail nav h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.5rem 0 .5rem;
+    font-weight: 600;
+  }
+  .rail nav ul { list-style: none; margin: 0; padding: 0; }
+  .rail nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .34rem .55rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+  .rail nav a:hover { background: var(--surface-sunk); color: var(--ink); }
+  .rail nav a.sub { padding-left: 1.9rem; font-size: .82rem; color: var(--ink-faint); }
+
+  /* ---------- main ---------- */
+  main { padding: 2.4rem clamp(1.2rem, 4vw, 3.4rem) 6rem; min-width: 0; }
+  .topbar {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+  .lede { max-width: var(--maxread); font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 2.4rem; }
+
+  .feature { margin-top: 3.4rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .feature:first-of-type { border-top: none; }
+  .feature > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .feature > .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .feature > p { max-width: var(--maxread); color: var(--ink-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .card > header {
+    padding: 1.05rem 1.3rem .9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunk);
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card > header .ico {
+    flex: none;
+    width: 2rem; height: 2rem;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent-wash);
+    color: var(--accent-deep);
+    font-size: 1rem;
+  }
+  .card > header .dtype {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .64rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .card > header h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+
+  .card .explain { padding: 1.15rem 1.3rem; font-size: .95rem; }
+  .card .explain :first-child { margin-top: 0; }
+  .card .explain :last-child { margin-bottom: 0; }
+  .card .explain ol, .card .explain ul { padding-left: 1.2rem; margin: .6rem 0; }
+  .card .explain li { margin: .3rem 0; }
+  .card .explain code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+
+  .diagram-wrap {
+    border-top: 1px solid var(--border);
+    background: var(--surface-sunk);
+    padding: 1.3rem;
+    overflow-x: auto;
+  }
+  .mermaid {
+    margin: 0 auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: "Public Sans", sans-serif !important;
+    min-height: 40px;
+  }
+  .mermaid svg { max-width: none; height: auto; }
+  .diagram-fallback { color: var(--crit); font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: 1rem; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .legend h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.1rem;
+  }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem 2rem; }
+  .legend-grid h5 { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+  .legend-grid ul { list-style: none; margin: 0; padding: 0; font-size: .86rem; color: var(--ink-soft); }
+  .legend-grid li { margin: .34rem 0; display: flex; gap: .55rem; align-items: flex-start; }
+  .legend-grid li .swatch { margin-top: .32rem; }
+  .legend-grid li .ic {
+    flex: none; width: 1.55rem; height: 1.55rem;
+    display: grid; place-items: center;
+    border-radius: 5px; font-size: .92rem;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .ic-actor  { background: #E7F1FB; border-color: #B9D6F0 !important; color: #10324E !important; }
+  .ic-system { background: #E9F5E9; border-color: #BFE0BF !important; color: #1B4D1B !important; }
+  .ic-store  { background: #FDF3D8; border-color: #EACF93 !important; color: #5A420A !important; }
+  .ic-ext    { background: #FCE7EF; border-color: #F0BDD2 !important; color: #6A1E3F !important; }
+  .ic-term   { background: #ECEFF1; border-color: #C7D0D4 !important; color: #26333A !important; }
+  .swatch { flex: none; width: .85rem; height: .85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); }
+  .sw-actor  { background: #E7F1FB; }
+  .sw-system { background: #E9F5E9; }
+  .sw-store  { background: #FDF3D8; }
+  .sw-ext    { background: #FCE7EF; }
+  .sw-term   { background: #ECEFF1; }
+
+  .note {
+    font-size: .86rem;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border-strong);
+    padding: .3rem 0 .3rem .9rem;
+    margin: 1.4rem 0 0;
+    max-width: var(--maxread);
+  }
+  /* ---------- glossary ---------- */
+  .glossary { margin-top: 3.6rem; padding-top: 2.4rem; border-top: 1px solid var(--border); }
+  .glossary > h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+    scroll-margin-top: 1.5rem;
+  }
+  .glossary > .intro { max-width: var(--maxread); color: var(--ink-soft); margin: 0 0 1.4rem; }
+  .gloss-group { margin-top: 1.9rem; }
+  .gloss-group h3 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .3rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .glossary dl {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) 1fr;
+    gap: 0 1.6rem;
+    margin: 0;
+  }
+  .glossary dt {
+    font-weight: 700;
+    color: var(--ink);
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .glossary dd {
+    margin: 0;
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: .93rem;
+  }
+  .glossary dd code, .glossary dt code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; }
+    .glossary dt { border-top: 1px solid var(--border); padding-bottom: .1rem; }
+    .glossary dd { border-top: none; padding-top: .1rem; }
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="mark">IndiaMART &middot; Users-API KT</p>
+    <p class="mark-title">SellOnIM Log</p>
+    <nav>
+      <ul>
+        <li><a href="#legend"><i data-lucide="compass"></i> How to read these</a></li>
+        <li><a href="#feature"><i data-lucide="user-plus"></i> SellOnIM Log</a></li>
+        <li><a href="#d-biz" class="sub">Business flowchart</a></li>
+        <li><a href="#d-dfd" class="sub">Data-flow diagram</a></li>
+        <li><a href="#d-seq" class="sub">Sequence &mdash; journey + eligibility</a></li>
+        <li><a href="#glossary"><i data-lucide="book-marked"></i> Glossary</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="topbar">Knowledge Transfer &middot; Engineering</p>
+
+    <h1>SellOnIM Log</h1>
+    <p class="lede">SellOnIM Log tracks a new supplier's onboarding journey &mdash; name given, company
+      given, email given, products added, address, GST, and a best-time-to-call. It is
+      insert-or-update by <code>LOG_ID</code>. For one specific customer type, a successful
+      journey update also fires a downstream pipeline: five sequential eligibility gates that,
+      if all pass, place the supplier in the internal calling / verification queue. A failed
+      gate is permanent &mdash; there is no automatic re-evaluation.</p>
+
+    <section class="legend" id="legend">
+      <h2>How to read these diagrams</h2>
+      <div class="legend-grid">
+        <div>
+          <h5>Node shape &amp; colour</h5>
+          <ul>
+            <li><span class="swatch sw-actor"></span> Rectangle &mdash; actor / external entity</li>
+            <li><span class="swatch sw-system"></span> Rounded &mdash; system step / process</li>
+            <li><span class="swatch sw-store"></span> Diamond &mdash; decision &nbsp;&middot;&nbsp; cylinder &mdash; data store</li>
+            <li><span class="swatch sw-ext"></span> External system / third party</li>
+            <li><span class="swatch sw-term"></span> Terminal outcome</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Role icons (page chrome)</h5>
+          <ul>
+            <li><span class="ic ic-actor"><i data-lucide="user"></i></span> Supplier / buyer / internal admin</li>
+            <li><span class="ic ic-system"><i data-lucide="cog"></i></span> System process / async consumer</li>
+            <li><span class="ic ic-ext"><i data-lucide="landmark"></i></span> External / third-party service</li>
+            <li><span class="ic ic-store"><i data-lucide="database"></i></span> Database <span class="ic ic-store"><i data-lucide="inbox"></i></span> message queue</li>
+            <li><span class="ic ic-term"><i data-lucide="bell"></i></span> Notification / ops alert</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Diagram types</h5>
+          <ul>
+            <li><span class="ic ic-system"><i data-lucide="git-branch"></i></span> <span><strong>Business flowchart</strong> &mdash; decisions &amp; outcomes, no code.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="share-2"></i></span> <span><strong>DFD (Level&nbsp;1)</strong> &mdash; numbered processes, <code>D1&hellip;Dn</code> stores, data on every arrow.</span></li>
+            <li><span class="ic ic-system"><i data-lucide="list-ordered"></i></span> <span><strong>Sequence</strong> &mdash; lifelines in call order; <code>alt</code> = branches, <code>par</code> = parallel work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature" id="feature">
+      <p class="kicker"><i data-lucide="user-plus"></i> Onboarding &amp; Lead Qualification</p>
+      <h2>SellOnIM Log</h2>
+      <p><code>POST /user/sellonimlog</code> (serviceName <code>USER_SELLONIM_LOG</code>).
+      The route is JWT-exempt; a <code>Gateway_v1</code> allowlist is the only auth.
+      <code>BEST_TIME_TO_CALL</code> (if present) must be RFC3339. A lookup merges
+      <code>FK_PARENT_GLUSR_ID</code> / <code>GLUSR_USR_APPROV</code> from
+      <code>glusr_usr</code>, then <code>sellonim_log</code> is inserted
+      (<code>RETURNING sellonim_log_id</code>) or updated
+      (<code>WHERE sellonim_log_id = $n AND fk_glusr_usr_id = $m</code>). On success and
+      <code>CUSTTYPE_ID == &quot;39&quot;</code> a RabbitMQ message drives the
+      <code>USER_SELLONIM_CALLING</code> consumer's five gates, ending in an
+      <code>iil_supp_verification</code> insert.</p>
+
+      <article class="card">
+        <header id="d-biz">
+          <span class="ico"><i data-lucide="git-branch"></i></span>
+          <span><span class="dtype">Business flowchart</span><h3>An onboarding-journey log that can qualify a call</h3></span>
+        </header>
+        <div class="explain">
+<p>A running log, plus a conditional qualification pipeline:</p>
+          <ul>
+            <li><strong>Flow A &mdash; journey log</strong>: each step's progress is recorded.
+              No <code>LOG_ID</code> inserts a new row; a <code>LOG_ID</code> updates the
+              matching row, but only if it belongs to the same supplier. Record id, supplier id
+              and mobile act as lookup keys and cannot be changed on update.</li>
+            <li><strong>Flow B &mdash; calling eligibility</strong>: only for one customer type,
+              a successful update fires a downstream check of five gates &mdash; no disqualifying
+              verification flag, priority score in the right band, no risky duplicate-email
+              account, no duplicate GST, and not already queued in the last 30 days. All five
+              must pass, in order; the first failure stops the chain.</li>
+            <li>All five pass &rarr; a new calling-queue entry is created with the
+              best-time-to-call. A failure is silent and permanent &mdash; re-qualification
+              needs a fresh journey update.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef actor fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef system fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef decision fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+    classDef terminal fill:#ECEFF1,stroke:#5F7079,color:#26333A
+
+    A["New supplier via app / tool<br/>POST /user/sellonimlog"]:::actor --> V{"BEST_TIME_TO_CALL valid RFC3339?<br/>+ gateway allowlist"}:::decision
+    V -- No --> RJ["Reject"]:::terminal
+    V -- Yes --> M["Merge parent GLID + approval status from glusr_usr"]:::system
+    M --> IU{"LOG_ID present?"}:::decision
+    IU -- No --> INS["INSERT sellonim_log RETURNING id"]:::system
+    IU -- Yes --> UPD["UPDATE WHERE (log_id, glid) match<br/>mismatch &rarr; 0 rows &rarr; failure"]:::system
+    INS --> CT{"Success AND CUSTTYPE_ID = 39?"}:::decision
+    UPD --> CT
+    CT -- No --> DONE["Journey logged, nothing downstream"]:::terminal
+    CT -- Yes --> G1{"Gate 1: no disqualifying verification flag?"}:::decision
+    G1 -- No --> NE["Not eligible (silent, permanent)"]:::terminal
+    G1 -- Yes --> G2{"Gate 2: priority score 0.8 / 0.9?"}:::decision
+    G2 -- No --> NE
+    G2 -- Yes --> G3{"Gate 3: no risky duplicate-email account?"}:::decision
+    G3 -- No --> NE
+    G3 -- Yes --> G4{"Gate 4: no duplicate GST?"}:::decision
+    G4 -- No --> NE
+    G4 -- Yes --> G5{"Gate 5: not queued in last 30 days?"}:::decision
+    G5 -- No --> NE
+    G5 -- Yes --> Q["INSERT iil_supp_verification<br/>(calling queue + best-time-to-call)"]:::system
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-dfd">
+          <span class="ico"><i data-lucide="share-2"></i></span>
+          <span><span class="dtype">Data-flow diagram &middot; Level 1</span><h3>Where the journey is logged and the calling queue is fed</h3></span>
+        </header>
+        <div class="explain">
+<p>A two-round-trip write, then a gated consumer:</p>
+          <ul>
+            <li><strong>1.0 Journey write</strong> reads <code>glusr_usr</code> for two derived
+              columns, then inserts / updates <code>D1</code> (approvalpg).</li>
+            <li><strong>2.0 Eligibility consumer</strong> runs five sequential SELECT gates
+              against <code>D2</code>&ndash;<code>D6</code> (meshpg).</li>
+            <li><strong>3.0 Queue insert</strong> writes <code>D6</code>
+              (<code>iil_supp_verification</code>) only if all gates pass.</li>
+            <li>No read endpoint, cron, Kafka or Redis is attached.</li>
+          </ul>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart LR
+    classDef ext fill:#E7F1FB,stroke:#1F6FB2,color:#10324E
+    classDef proc fill:#E9F5E9,stroke:#3B873B,color:#1B4D1B
+    classDef store fill:#FDF3D8,stroke:#C98A0E,color:#5A420A
+
+    APP["Onboarding apps / tools"]:::ext
+    CALL["Internal calling / verification team"]:::ext
+
+    P1(("1.0<br/>Journey write")):::proc
+    P2(("2.0<br/>Eligibility consumer<br/>(5 gates)")):::proc
+    P3(("3.0<br/>Queue insert")):::proc
+
+    D1[("D1 sellonim_log + glusr_usr<br/>approvalpg")]:::store
+    D2[("D2 iil_supp_verification_log")]:::store
+    D3[("D3 active_fcp_details")]:::store
+    D4[("D4 glusr_usr + custtype")]:::store
+    D5[("D5 GLUSR_USR_COMP_REGISTRATIONS")]:::store
+    D6[("D6 iil_supp_verification<br/>(calling queue)")]:::store
+    Q[["USER_SELLONIM_CALLING (only CUSTTYPE_ID = 39)"]]:::store
+
+    APP -->|"journey step"| P1
+    P1 -->|"read 2 derived cols, INSERT / UPDATE"| D1
+    P1 -->|"publish on success + custtype 39"| Q
+    Q --> P2
+    P2 -->|"gate 1"| D2
+    P2 -->|"gate 2"| D3
+    P2 -->|"gate 3"| D4
+    P2 -->|"gate 4"| D5
+    P2 -->|"gate 5"| D6
+    P2 --> P3
+    P3 -->|"INSERT (all gates passed)"| D6
+    D6 -.->|"consumed by"| CALL
+</pre>
+        </div>
+      </article>
+
+      <article class="card">
+        <header id="d-seq">
+          <span class="ico"><i data-lucide="list-ordered"></i></span>
+          <span><span class="dtype">Sequence diagram &middot; Flows A + B</span><h3>Logging a journey step, then the 5-gate calling-eligibility pipeline</h3></span>
+        </header>
+        <div class="explain">
+<p>A journey update and the eligibility pipeline:</p>
+          <ol>
+            <li>An allowed app posts a journey step; the API checks the RFC3339 date and the
+              gateway, merges two derived columns from <code>glusr_usr</code>, and inserts or
+              updates <code>sellonim_log</code>.</li>
+            <li><strong>alt</strong> &mdash; success with <code>CUSTTYPE_ID = 39</code>: a
+              message is published; otherwise nothing downstream happens.</li>
+            <li>The consumer runs gates 1&ndash;5 in order, short-circuiting on the first
+              failure or DB error.</li>
+            <li><strong>alt</strong> &mdash; all five pass: an <code>iil_supp_verification</code>
+              row is inserted; any gate fails: the message is acked as &ldquo;not eligible&rdquo;
+              with no retry.</li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor APP as Onboarding app
+    participant API as write-API<br/>SellonimLog
+    participant AP as approvalpg<br/>sellonim_log
+    participant MQ as RabbitMQ
+    participant CN as eligibility consumer
+    participant MP as meshpg gate tables
+
+    APP->>API: POST /user/sellonimlog {GLID, CUSTTYPE_ID, journey flags, BEST_TIME_TO_CALL?}
+    API->>API: RFC3339 check + gateway allowlist
+    API->>AP: read parent GLID + approval status
+    alt LOG_ID absent
+        API->>AP: INSERT sellonim_log RETURNING id
+    else LOG_ID present
+        API->>AP: UPDATE WHERE (log_id, glid) match
+    end
+    alt success AND CUSTTYPE_ID = 39
+        API->>MQ: publish USER_SELLONIM_LOG
+    else other
+        API-->>APP: journey logged, nothing downstream
+    end
+    MQ->>CN: deliver
+    CN->>MP: gate 1 verification flag
+    CN->>MP: gate 2 priority 0.8 / 0.9
+    CN->>MP: gate 3 duplicate-email risk
+    CN->>MP: gate 4 duplicate GST
+    CN->>MP: gate 5 queued in last 30 days
+    alt all 5 gates pass
+        CN->>MP: INSERT iil_supp_verification (calling queue)
+    else any gate fails
+        CN-->>MQ: ack as not eligible (no retry)
+    end
+</pre>
+        </div>
+      </article>
+
+      <p class="note">Source: <code>SellOnIM Log KT</code> business &amp; technical docs. The
+        gate-check helper functions are named &ldquo;getDuplicate&hellip;&rdquo; but return true
+        when <em>no</em> duplicate is found; a &ldquo;not eligible&rdquo; result is permanent
+        with no cron to re-evaluate; the route bypasses the standard JWT / AK middleware; and
+        <code>CUSTTYPE_ID == &quot;39&quot;</code> is an unexplained magic string &mdash; all
+        flagged in the source doc.</p>
+    </section>
+
+    <section class="glossary" id="glossary">
+      <h2>Glossary</h2>
+      <p class="intro">Business terms used above.</p>
+      <div class="gloss-group">
+        <h3><i data-lucide="user-plus"></i> The journey log</h3>
+        <dl>
+          <dt>SellOnIM</dt>
+          <dd>A new supplier's onboarding journey on IndiaMART &mdash; the steps from signup to a usable selling profile.</dd>
+          <dt><code>sellonim_log</code></dt>
+          <dd>One row per (supplier, <code>LOG_ID</code>) recording which onboarding steps are done and the best time to call.</dd>
+          <dt>Insert vs update</dt>
+          <dd>No <code>LOG_ID</code> inserts a new row; a <code>LOG_ID</code> updates &mdash; but only if it belongs to the same supplier, otherwise zero rows change and it is reported as a failure.</dd>
+          <dt>Locked keys</dt>
+          <dd>Record id, supplier id and mobile are lookup keys on update; values sent for them are ignored.</dd>
+          <dt><code>BEST_TIME_TO_CALL</code></dt>
+          <dd>An optional RFC3339 timestamp, reformatted server-side and carried through to the calling-queue entry.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="filter"></i> The five gates</h3>
+        <dl>
+          <dt>Trigger</dt>
+          <dd>The downstream pipeline runs only for <code>CUSTTYPE_ID == &quot;39&quot;</code>; every other customer type just updates the log.</dd>
+          <dt>Gate 1 &mdash; verification history</dt>
+          <dd>No prior disqualifying verification flag on the supplier.</dd>
+          <dt>Gate 2 &mdash; priority band</dt>
+          <dd>The supplier's FCP priority score is exactly 0.8 or 0.9.</dd>
+          <dt>Gate 3 &mdash; duplicate email</dt>
+          <dd>No other risky (paid or fcp-flagged) account shares this supplier's de-duplicated email.</dd>
+          <dt>Gate 4 &mdash; duplicate GST</dt>
+          <dd>No other supplier shares this supplier's GST number.</dd>
+          <dt>Gate 5 &mdash; recency</dt>
+          <dd>The supplier has not already been placed in the calling queue in the last 30 days.</dd>
+        </dl>
+      </div>
+      <div class="gloss-group">
+        <h3><i data-lucide="phone-call"></i> Outcome</h3>
+        <dl>
+          <dt>Calling / verification queue</dt>
+          <dd><code>iil_supp_verification</code> &mdash; the table the internal calling team works from. A passing supplier is inserted here with fixed source / weight / priority constants.</dd>
+          <dt>Permanent &ldquo;not eligible&rdquo;</dt>
+          <dd>A failed gate acks the message as processed-but-not-qualified. There is no cron and no automatic retry; a fresh journey update is needed to re-evaluate.</dd>
+          <dt>Short-circuit chain</dt>
+          <dd>Gates run in order; the first failure or DB error stops the rest.</dd>
+          <dt>GLID</dt>
+          <dd>GlobalID &mdash; the unique internal identifier for the supplier.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the Users-API KT docs &middot; diagrams rendered with Mermaid.
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll(".mermaid"));
+    try {
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: '"Public Sans", sans-serif',
+          themeVariables: { fontSize: "15px" },
+          flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false, padding: 14 },
+          sequence: { useMaxWidth: false, wrap: true, actorMargin: 44 }
+        });
+        mermaid.run({ nodes: blocks });
+      }
+    } catch (e) {
+      blocks.forEach(function (el) {
+        el.innerHTML = '<div class="diagram-fallback">Diagram failed to render: ' +
+          String((e && e.message) || e) + "</div>";
+      });
+    }
+    try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+  })();
+</script>
